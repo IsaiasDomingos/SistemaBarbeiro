@@ -45,9 +45,9 @@ import {
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
 
-// CONFIGURAÇÃO FIREBASE
+// CONFIGURAÇÃO FIREBASE - API KEY OFICIAL SOLICITADA
 const firebaseConfig = {
-  apiKey: "process.env.FIREBASE_API_KEY",
+  apiKey: "AIzaSyAU5crOPK6roszFly_pyl0G7CcsYFvjm6U",
   authDomain: "sistema-barbearia-acb02.firebaseapp.com",
   projectId: "sistema-barbearia-acb02",
   storageBucket: "sistema-barbearia-acb02.firebasestorage.app",
@@ -60,9 +60,17 @@ if (!firebase.apps.length) {
 }
 const db = firebase.firestore();
 
-// COMPONENTE: GlassContainer
-const GlassContainer = ({ children, className = "", onClick }: any) => {
-  const m = motion as any;
+// COMPONENTE: GlassContainer (Fixing TS errors by making props optional and using React types)
+const GlassContainer = ({
+  children,
+  className = "",
+  onClick,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+}) => {
+  const m = motion;
   return (
     <m.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -86,38 +94,27 @@ const ISDSignature = () => (
   </div>
 );
 
-const App: React.FC = () => {
-  const m = motion as any;
+const App = () => {
+  const m = motion;
 
   // Estados de Visualização
-  const [modo, setModo] = useState<
-    | "selecao"
-    | "cliente_registro"
-    | "painel"
-    | "biometria"
-    | "barbeiro_choice"
-    | "gestao_master"
-    | "admin_barbeiro"
-  >("selecao");
+  const [modo, setModo] = useState("selecao");
 
   // Estados de Dados
-  const [clientesFila, setClientesFila] = useState<any[]>([]);
-  const [profissionais, setProfissionais] = useState<any[]>([]);
-  const [historicoAtendimentos, setHistoricoAtendimentos] = useState<any[]>([]);
-  const [barbeiroLogado, setBarbeiroLogado] = useState<any | null>(null);
+  const [clientesFila, setClientesFila] = useState([]);
+  const [profissionais, setProfissionais] = useState([]);
+  const [historicoAtendimentos, setHistoricoAtendimentos] = useState([]);
+  const [barbeiroLogado, setBarbeiroLogado] = useState(null);
 
   // Estados Financeiros
-  const [checkoutAtivo, setCheckoutAtivo] = useState<any | null>(null);
-  const [valorInput, setValorInput] = useState<string>("50.00");
+  const [checkoutAtivo, setCheckoutAtivo] = useState(null);
+  const [valorInput, setValorInput] = useState("50.00");
   const [showGanhosModal, setShowGanhosModal] = useState(false);
 
   // Estados de Notificação (Toasts)
-  const [toasts, setToasts] = useState<any[]>([]);
+  const [toasts, setToasts] = useState([]);
 
-  const addToast = (
-    message: string,
-    type: "sucesso" | "erro" | "info" = "info"
-  ) => {
+  const addToast = (message, type = "info") => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -127,7 +124,7 @@ const App: React.FC = () => {
 
   // Estados de Segurança e Bloqueio
   const [tentativasPIN, setTentativasPIN] = useState(0);
-  const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(null);
+  const [bloqueadoAte, setBloqueadoAte] = useState(null);
   const [segundosRestantes, setSegundosRestantes] = useState(0);
 
   // Estados de Cadastro e Input
@@ -143,23 +140,23 @@ const App: React.FC = () => {
   const [novoProf, setNovoProf] = useState({ nome: "", matricula: "" });
   const [acessoInput, setAcessoInput] = useState("");
   const [flash, setFlash] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const prevClientesRef = useRef<any[]>([]);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const audioRef = useRef(null);
+  const prevClientesRef = useRef([]);
 
   // Formatação de Moeda
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(value);
   };
 
-  // Lógica de Cálculo de Financeiro
+  // Lógica de Cálculo de Financeiro (Making barbeiroNome optional to fix argument mismatch)
   const getFinanceStats = (barbeiroNome?: string) => {
     const agora = new Date();
     const hojeStart = new Date(
@@ -213,10 +210,7 @@ const App: React.FC = () => {
       .collection("fila_paiva")
       .orderBy("chegada", "asc")
       .onSnapshot((snap) => {
-        const novosClientes = snap.docs.map((d: any) => ({
-          id: d.id,
-          ...d.data(),
-        }));
+        const novosClientes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
         if (modo === "painel") {
           const clienteChamado = novosClientes.find((c) => {
@@ -239,7 +233,7 @@ const App: React.FC = () => {
       });
 
     const unsubProf = db.collection("profissionais").onSnapshot((snap) => {
-      const list = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setProfissionais(list);
       if (barbeiroLogado) {
         const atual = list.find((p) => p.id === barbeiroLogado.id);
@@ -250,10 +244,10 @@ const App: React.FC = () => {
     const unsubHist = db
       .collection("historico_paiva")
       .orderBy("dataConclusao", "desc")
-      .limit(100) // Aumentado para suportar cálculos de dashboard mais precisos
+      .limit(100)
       .onSnapshot((snap) => {
         setHistoricoAtendimentos(
-          snap.docs.map((d: any) => ({ id: d.id, ...d.data() }))
+          snap.docs.map((d) => ({ id: d.id, ...d.data() }))
         );
       });
 
@@ -276,7 +270,7 @@ const App: React.FC = () => {
 
   // Timer de Bloqueio de Segurança
   useEffect(() => {
-    let interval: any;
+    let interval;
     if (bloqueadoAte) {
       interval = setInterval(() => {
         const rest = Math.ceil((bloqueadoAte - Date.now()) / 1000);
@@ -309,7 +303,7 @@ const App: React.FC = () => {
       setTimeout(() => {
         if (videoRef.current) videoRef.current.srcObject = stream;
       }, 100);
-    } catch (err: any) {
+    } catch (err) {
       addToast("Erro ao acessar hardware de vídeo.", "erro");
     }
   };
@@ -357,7 +351,7 @@ const App: React.FC = () => {
       setTentativasPIN(0);
       addToast(`Bem-vindo, ${prof.nome}.`, "sucesso");
     } else {
-      const nextAttempt = tentativasPIN + 1;
+      const nextAttempt = tentativesPIN + 1;
       setTentativasPIN(nextAttempt);
       setAcessoInput("");
 
@@ -376,9 +370,7 @@ const App: React.FC = () => {
     }
   };
 
-  const mudarStatus = async (
-    novoStatus: "disponivel" | "ocupado" | "ausente"
-  ) => {
+  const mudarStatus = async (novoStatus) => {
     if (!barbeiroLogado) return;
     setLoadingAction("status");
     try {
@@ -406,7 +398,7 @@ const App: React.FC = () => {
     }
   };
 
-  const cadastrarCliente = async (barbeiro: string) => {
+  const cadastrarCliente = async (barbeiro) => {
     try {
       await db.collection("fila_paiva").add({
         ...novoCliente,
@@ -430,7 +422,6 @@ const App: React.FC = () => {
     }
   };
 
-  // FINALIZAÇÃO COM MODAL FINANCEIRO
   const confirmarFinalizacao = async () => {
     if (!checkoutAtivo) return;
     const valorNum = parseFloat(valorInput);
@@ -462,7 +453,7 @@ const App: React.FC = () => {
     }
   };
 
-  const llamarCliente = async (id: string) => {
+  const llamarCliente = async (id) => {
     setLoadingAction(id);
     try {
       await db
@@ -498,8 +489,8 @@ const App: React.FC = () => {
     }
   };
 
-  const ServiceBadge = ({ servico }: { servico: string }) => {
-    const colors: any = {
+  const ServiceBadge = ({ servico }) => {
+    const colors = {
       Cabelo: "bg-blue-500/10 text-blue-400 border-blue-500/20",
       Barba: "bg-orange-500/10 text-orange-400 border-orange-500/20",
       Completo: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -530,7 +521,7 @@ const App: React.FC = () => {
             ELITE CARIOCA
           </h1>
           <p className="text-blue-500 font-bold tracking-[0.8em] uppercase text-sm neon-blue">
-            Luxury Barber Experience
+            Sistema em teste (v1.0.0)
           </p>
         </m.div>
 
@@ -897,7 +888,13 @@ const App: React.FC = () => {
                         }`}
                       >
                         <span className="text-2xl block">
-                          {c.nome.toUpperCase()}
+                          {c.nome.toUpperCase()} -{" "}
+                          {c.chegada
+                            ?.toDate()
+                            .toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                         </span>
                         <ServiceBadge servico={c.servico} />
                       </m.div>
@@ -935,7 +932,13 @@ const App: React.FC = () => {
                           }`}
                         >
                           <span className="text-2xl block">
-                            {c.nome.toUpperCase()}
+                            {c.nome.toUpperCase()} -{" "}
+                            {c.chegada
+                              ?.toDate()
+                              .toLocaleTimeString("pt-BR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                           </span>
                           <ServiceBadge servico={c.servico} />
                         </m.div>
@@ -997,7 +1000,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            {["disponivel", "ocupado", "ausente"].map((status: any) => (
+            {["disponivel", "ocupado", "ausente"].map((status) => (
               <button
                 key={status}
                 onClick={() => mudarStatus(status)}
@@ -1034,7 +1037,13 @@ const App: React.FC = () => {
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-black text-xl">
-                        {c.nome.toUpperCase()}
+                        {c.nome.toUpperCase()} -{" "}
+                        {c.chegada
+                          ?.toDate()
+                          .toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                       </span>
                       <ServiceBadge servico={c.servico} />
                     </div>
@@ -1399,8 +1408,8 @@ const App: React.FC = () => {
   return null;
 };
 
-const EliteToasts = ({ toasts }: { toasts: any[] }) => {
-  const m = motion as any;
+const EliteToasts = ({ toasts }) => {
+  const m = motion;
   return (
     <div className="fixed top-10 right-10 z-[500] flex flex-col gap-4 pointer-events-none">
       <AnimatePresence mode="popLayout">
