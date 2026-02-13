@@ -185,14 +185,12 @@ const App = () => {
   };
 
   const cadastrarCliente = async (barbeiro) => {
-    await db
-      .collection("fila_paiva")
-      .add({
-        ...novoCliente,
-        barbeiroPref: barbeiro,
-        chegada: firebase.firestore.Timestamp.now(),
-        status: "esperando",
-      });
+    await db.collection("fila_paiva").add({
+      ...novoCliente,
+      barbeiroPref: barbeiro,
+      chegada: firebase.firestore.Timestamp.now(),
+      status: "esperando",
+    });
     setModo("selecao");
     setNovoCliente({
       nome: "",
@@ -277,10 +275,10 @@ const App = () => {
           </div>
           <div className="space-y-3">
             <label className="text-[10px] font-black uppercase text-slate-500 text-center block tracking-widest">
-              SERVIÇO
+              SELECIONE O SERVIÇO
             </label>
-            <div className="grid grid-cols-3 gap-3">
-              {["CABELO", "BARBA", "COMPLETO"].map((s) => (
+            <div className="grid grid-cols-2 gap-3">
+              {["CABELO", "BARBA", "SOBRANCELHA", "COMPLETO"].map((s) => (
                 <button
                   key={s}
                   onClick={() => setNovoCliente({ ...novoCliente, servico: s })}
@@ -347,7 +345,7 @@ const App = () => {
                 }`}
               >
                 <div
-                  className={`w-2 h-2 rounded-full ${
+                  className={`w-2 h-2 rounded-full animate-pulse ${
                     p.status === "disponivel"
                       ? "bg-emerald-500"
                       : "bg-orange-500"
@@ -572,7 +570,7 @@ const App = () => {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            {["disponivel", "volto_logo", "ausente"].map((st) => (
+            {["disponivel", "Volto_logo", "ausente"].map((st) => (
               <button
                 key={st}
                 onClick={() =>
@@ -581,10 +579,10 @@ const App = () => {
                     .doc(barbeiroLogado.id)
                     .update({ status: st })
                 }
-                className={`p-6 rounded-[2rem] font-black uppercase text-xs border-2 ${
+                className={`p-6 rounded-[2rem] font-black uppercase text-xs border-2 transition-all ${
                   dAtual.status === st
                     ? "bg-emerald-600 border-emerald-400"
-                    : "bg-slate-900 opacity-40"
+                    : "bg-slate-900 border-white/5 opacity-40"
                 }`}
               >
                 {st === "volto_logo" ? "VOLTO LOGO" : st.toUpperCase()}
@@ -603,50 +601,56 @@ const App = () => {
                 <button
                   onClick={() => {
                     if (dAtual.status !== "disponivel")
-                      return addToast("ESTEJA DISPONÍVEL", "erro");
+                      return addToast(
+                        "PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL",
+                        "erro"
+                      );
                     setCheckoutAtivo(emAtend[0]);
                   }}
-                  className="w-full bg-emerald-600 p-8 rounded-3xl font-black uppercase"
+                  className="w-full bg-emerald-600 p-8 rounded-3xl font-black uppercase hover:bg-emerald-500 transition-all"
                 >
                   FINALIZAR SERVIÇO
                 </button>
               </div>
             ) : (
               <div className="p-10 bg-slate-900/50 rounded-[3rem] border border-white/5 text-center space-y-6">
-                <h3 className="font-black text-xs text-slate-500 uppercase">
-                  PRÓXIMO DA FILA
+                <h3 className="font-black text-xs text-slate-500 uppercase tracking-widest flex items-center justify-center gap-3">
+                  <Users size={16} /> PRÓXIMO DA FILA
                 </h3>
                 {prox ? (
                   <>
-                    <h4 className="text-5xl font-black uppercase">
+                    <h4 className="text-5xl font-black uppercase text-white">
                       {prox.nome}
                     </h4>
                     <button
                       onClick={async () => {
                         if (dAtual.status !== "disponivel")
-                          return addToast("ESTEJA DISPONÍVEL", "erro");
-                        await db
-                          .collection("fila_paiva")
-                          .doc(prox.id)
-                          .update({
-                            status: "atendendo",
-                            barbeiroPref: barbeiroLogado.nome,
-                          });
+                          return addToast(
+                            "PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL",
+                            "erro"
+                          );
+                        await db.collection("fila_paiva").doc(prox.id).update({
+                          status: "atendendo",
+                          barbeiroPref: barbeiroLogado.nome,
+                        });
+                        addToast("Chamado!", "sucesso");
                       }}
-                      className="w-full bg-yellow-600 p-8 rounded-3xl font-black uppercase text-black"
+                      className="w-full bg-yellow-600 p-8 rounded-3xl font-black uppercase text-black hover:bg-yellow-500 transition-all"
                     >
                       CHAMAR PRÓXIMO
                     </button>
                   </>
                 ) : (
-                  <p className="text-slate-500">FILA VAZIA</p>
+                  <p className="text-slate-500 font-bold uppercase text-sm py-10">
+                    NÃO HÁ CLIENTES NA FILA
+                  </p>
                 )}
               </div>
             )}
           </div>
         </div>
         {checkoutAtivo && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-950/90">
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl">
             <div className="glass rounded-[2.5rem] p-10 w-full max-w-md space-y-10 border-emerald-500/30 text-center">
               <h3 className="text-3xl font-black italic neon-yellow">
                 VALOR PAGO
@@ -654,7 +658,7 @@ const App = () => {
               <input
                 type="number"
                 step="0.01"
-                className="w-full bg-slate-950 p-8 rounded-3xl text-5xl font-black text-center text-white outline-none border-2 border-emerald-500/20"
+                className="w-full bg-slate-950 p-8 rounded-3xl text-5xl font-black text-center text-white outline-none border-2 border-emerald-500/20 focus:border-emerald-500 transition-all"
                 value={valorInput}
                 onChange={(e) => setValorInput(e.target.value)}
               />
@@ -668,25 +672,27 @@ const App = () => {
                 <button
                   onClick={async () => {
                     if (dAtual.status !== "disponivel")
-                      return addToast("ESTEJA DISPONÍVEL", "erro");
-                    await db
-                      .collection("historico_paiva")
-                      .add({
-                        nome:
-                          checkoutAtivo.nome +
-                          " " +
-                          (checkoutAtivo.sobrenome || ""),
-                        barbeiro: barbeiroLogado.nome,
-                        valor: parseFloat(valorInput),
-                        dataConclusao: firebase.firestore.Timestamp.now(),
-                      });
+                      return addToast(
+                        "PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL",
+                        "erro"
+                      );
+                    await db.collection("historico_paiva").add({
+                      nome:
+                        checkoutAtivo.nome +
+                        " " +
+                        (checkoutAtivo.sobrenome || ""),
+                      barbeiro: barbeiroLogado.nome,
+                      valor: parseFloat(valorInput),
+                      dataConclusao: firebase.firestore.Timestamp.now(),
+                    });
                     await db
                       .collection("fila_paiva")
                       .doc(checkoutAtivo.id)
                       .delete();
                     setCheckoutAtivo(null);
+                    addToast("Finalizado!", "sucesso");
                   }}
-                  className="p-6 bg-emerald-600 rounded-3xl font-black uppercase text-xs text-white"
+                  className="p-6 bg-emerald-600 rounded-3xl font-black uppercase text-xs text-white shadow-xl shadow-emerald-900/20"
                 >
                   CONFIRMAR
                 </button>
@@ -703,7 +709,7 @@ const App = () => {
   if (modo === "gestao_master") {
     const stats = getFinanceStats();
     return (
-      <div className="min-h-screen bg-slate-950 p-8 text-white flex flex-col items-center overflow-y-auto">
+      <div className="min-h-screen bg-slate-950 p-8 text-white flex flex-col items-center overflow-y-auto custom-scrollbar">
         <div className="w-full max-w-6xl space-y-10 mb-20">
           <div className="flex justify-between items-center">
             <button
@@ -712,6 +718,9 @@ const App = () => {
             >
               <ArrowLeft size={16} /> Sair
             </button>
+            <h3 className="text-2xl font-black uppercase text-yellow-500 italic">
+              GESTÃO MASTER
+            </h3>
             <div className="flex gap-4">
               <button
                 onClick={limparFilaCompleta}
@@ -760,11 +769,14 @@ const App = () => {
               />
               <button
                 onClick={async () => {
-                  if (!novoProf.nome || !novoProf.matricula) return;
-                  await db
-                    .collection("profissionais")
-                    .add({ ...novoProf, status: "ausente" });
+                  if (!novoProf.nome || !novoProf.matricula)
+                    return addToast("Preencha todos os dados", "erro");
+                  await db.collection("profissionais").add({
+                    ...novoProf,
+                    status: "ausente",
+                  });
                   setNovoProf({ nome: "", matricula: "" });
+                  addToast("Barbeiro cadastrado!", "sucesso");
                 }}
                 className="w-full bg-yellow-600 p-4 rounded-xl font-black text-black"
               >
@@ -773,21 +785,31 @@ const App = () => {
             </div>
             <div className="space-y-4">
               <h4 className="font-black uppercase text-xs">EQUIPE ATIVA</h4>
-              {profissionais.map((p) => (
-                <div
-                  key={p.id}
-                  className="p-4 bg-slate-900 rounded-xl flex justify-between border border-white/5"
-                >
-                  <span>{p.nome}</span>
-                  <button
-                    onClick={() =>
-                      db.collection("profissionais").doc(p.id).delete()
-                    }
+              <div className="space-y-2 h-[200px] overflow-y-auto">
+                {profissionais.map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-4 bg-slate-900 rounded-xl flex justify-between border border-white/5"
                   >
-                    <Trash2 size={16} className="text-red-500" />
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <span className="font-black uppercase text-xs block">
+                        {p.nome}
+                      </span>
+                      <span className="text-[10px] text-slate-500 uppercase">
+                        ID: {p.matricula}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() =>
+                        db.collection("profissionais").doc(p.id).delete()
+                      }
+                      className="p-2 bg-red-500/10 rounded-lg text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <GlassContainer className="w-full space-y-10">
@@ -798,7 +820,7 @@ const App = () => {
               </h3>
               <button
                 onClick={limparHistoricoCompleto}
-                className="bg-red-600/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-2xl font-black uppercase text-[9px] flex items-center gap-2"
+                className="bg-red-600/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-2xl font-black uppercase text-[9px] flex items-center gap-2 hover:bg-red-600 hover:text-white transition-all"
               >
                 <Trash2 size={14} /> Limpar Histórico
               </button>
@@ -832,12 +854,10 @@ const App = () => {
                         {formatCurrency(h.valor || 0)}
                       </td>
                       <td className="py-6 px-4 text-right text-slate-500 font-mono">
-                        {h.dataConclusao
-                          ?.toDate()
-                          .toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                        {h.dataConclusao?.toDate().toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </td>
                     </tr>
                   ))}
