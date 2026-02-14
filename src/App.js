@@ -1,29 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Tv,
-  Lock,
-  ArrowLeft,
-  LogOut,
-  Scissors,
-  Crown,
-  Trash2,
-  Clock,
-  Users,
-  Eraser,
-  Play,
-  Calendar,
-  X,
-  Zap,
-  Code2,
-  Circle,
-  Check,
-  Info,
-  AlertCircle,
-  DollarSign,
-  Banknote,
-  TrendingUp,
-  Camera,
-  UserPlus,
+  Tv, Lock, ArrowLeft, LogOut, Scissors, Crown, Trash2, Clock, Users, 
+  Eraser, Play, Calendar, X, Zap, Code2, Circle, Check, Info, 
+  AlertCircle, DollarSign, Banknote, TrendingUp, Camera, UserPlus
 } from "lucide-react";
 
 import firebase from "firebase/compat/app";
@@ -298,7 +277,7 @@ const App = () => {
             onClick={() => setModo("barbeiro_choice")}
             className={`w-full p-8 rounded-[2.5rem] font-black uppercase text-sm tracking-[0.3em] transition-all ${
               novoCliente.nome
-                ? "bg-yellow-600 text-white"
+                ? "bg-yellow-600 text-white shadow-xl shadow-yellow-900/20"
                 : "bg-slate-800 text-slate-600"
             }`}
           >
@@ -346,9 +325,7 @@ const App = () => {
               >
                 <div
                   className={`w-2 h-2 rounded-full animate-pulse ${
-                    p.status === "disponivel"
-                      ? "bg-emerald-500"
-                      : "bg-orange-500"
+                    p.status === "disponivel" ? "bg-emerald-500" : "bg-orange-500"
                   }`}
                 />{" "}
                 {p.status === "disponivel" ? "DISPONÍVEL" : "VOLTO LOGO"}
@@ -445,11 +422,16 @@ const App = () => {
               TV DASHBOARD
             </p>
           </div>
-          <div className="text-4xl font-black font-mono">
-            {new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+          <div className="text-right flex flex-col items-end">
+            <span className="text-xl font-bold text-blue-400 uppercase tracking-widest mb-1">
+              {new Date().toLocaleDateString("pt-BR")}
+            </span>
+            <span className="text-4xl font-black font-mono">
+              {new Date().toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
@@ -471,6 +453,9 @@ const App = () => {
                   >
                     <span className="text-2xl font-black block">
                       {c.nome.toUpperCase()}
+                    </span>
+                    <span className="text-blue-400 font-bold block mb-2 text-xs">
+                      {c.chegada?.toDate().toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <ServiceBadge s={c.servico} />
                   </div>
@@ -507,6 +492,9 @@ const App = () => {
                       >
                         <span className="text-2xl font-black block">
                           {c.nome.toUpperCase()}
+                        </span>
+                        <span className="text-blue-400 font-bold block mb-2 text-xs">
+                          {c.chegada?.toDate().toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         <ServiceBadge s={c.servico} />
                       </div>
@@ -570,7 +558,7 @@ const App = () => {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            {["disponivel", "Volto_logo", "ausente"].map((st) => (
+            {["disponivel", "volto_logo", "ausente"].map((st) => (
               <button
                 key={st}
                 onClick={() =>
@@ -591,7 +579,7 @@ const App = () => {
           </div>
           <div className="grid grid-cols-1 gap-12">
             {emAtend.length > 0 ? (
-              <div className="p-10 bg-slate-900 rounded-[3rem] border-2 border-emerald-500/30 text-center space-y-6">
+              <div key="estado-atendendo" className="p-10 bg-slate-900 rounded-[3rem] border-2 border-emerald-500/30 text-center space-y-6">
                 <h3 className="font-black text-xs text-emerald-500 uppercase tracking-widest">
                   EM ATENDIMENTO
                 </h3>
@@ -601,10 +589,7 @@ const App = () => {
                 <button
                   onClick={() => {
                     if (dAtual.status !== "disponivel")
-                      return addToast(
-                        "PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL",
-                        "erro"
-                      );
+                      return addToast("PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL", "erro");
                     setCheckoutAtivo(emAtend[0]);
                   }}
                   className="w-full bg-emerald-600 p-8 rounded-3xl font-black uppercase hover:bg-emerald-500 transition-all"
@@ -613,35 +598,35 @@ const App = () => {
                 </button>
               </div>
             ) : (
-              <div className="p-10 bg-slate-900/50 rounded-[3rem] border border-white/5 text-center space-y-6">
+              <div key="estado-esperando" className="p-10 bg-slate-900/50 rounded-[3rem] border border-white/5 text-center space-y-6">
                 <h3 className="font-black text-xs text-slate-500 uppercase tracking-widest flex items-center justify-center gap-3">
                   <Users size={16} /> PRÓXIMO DA FILA
                 </h3>
                 {prox ? (
-                  <>
+                  <div key="cliente-presente" className="space-y-6">
                     <h4 className="text-5xl font-black uppercase text-white">
                       {prox.nome}
                     </h4>
                     <button
                       onClick={async () => {
                         if (dAtual.status !== "disponivel")
-                          return addToast(
-                            "PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL",
-                            "erro"
-                          );
-                        await db.collection("fila_paiva").doc(prox.id).update({
-                          status: "atendendo",
-                          barbeiroPref: barbeiroLogado.nome,
-                        });
+                          return addToast("PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL", "erro");
+                        await db
+                          .collection("fila_paiva")
+                          .doc(prox.id)
+                          .update({
+                            status: "atendendo",
+                            barbeiroPref: barbeiroLogado.nome,
+                          });
                         addToast("Chamado!", "sucesso");
                       }}
                       className="w-full bg-yellow-600 p-8 rounded-3xl font-black uppercase text-black hover:bg-yellow-500 transition-all"
                     >
                       CHAMAR PRÓXIMO
                     </button>
-                  </>
+                  </div>
                 ) : (
-                  <p className="text-slate-500 font-bold uppercase text-sm py-10">
+                  <p key="cliente-ausente" className="text-slate-500 font-bold uppercase text-sm py-10">
                     NÃO HÁ CLIENTES NA FILA
                   </p>
                 )}
@@ -672,10 +657,7 @@ const App = () => {
                 <button
                   onClick={async () => {
                     if (dAtual.status !== "disponivel")
-                      return addToast(
-                        "PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL",
-                        "erro"
-                      );
+                      return addToast("PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL", "erro");
                     await db.collection("historico_paiva").add({
                       nome:
                         checkoutAtivo.nome +
@@ -829,6 +811,7 @@ const App = () => {
               <table className="w-full text-left">
                 <thead className="text-[10px] uppercase font-black text-slate-700 border-b border-white/5">
                   <tr>
+                    <th className="pb-6 px-4">DATA</th>
                     <th className="pb-6 px-4">Cliente</th>
                     <th className="pb-6 px-4 text-center">Barbeiro</th>
                     <th className="pb-6 px-4 text-center">Valor</th>
@@ -841,6 +824,9 @@ const App = () => {
                       key={h.id}
                       className="border-b border-white/5 hover:bg-white/5 transition-all"
                     >
+                      <td className="py-6 px-4 font-black text-slate-400 font-mono">
+                        {h.dataConclusao?.toDate().toLocaleDateString("pt-BR")}
+                      </td>
                       <td className="py-6 px-4 font-black uppercase text-slate-300 tracking-tighter text-lg">
                         {h.nome}
                       </td>
@@ -854,10 +840,12 @@ const App = () => {
                         {formatCurrency(h.valor || 0)}
                       </td>
                       <td className="py-6 px-4 text-right text-slate-500 font-mono">
-                        {h.dataConclusao?.toDate().toLocaleTimeString("pt-BR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {h.dataConclusao
+                          ?.toDate()
+                          .toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                       </td>
                     </tr>
                   ))}
