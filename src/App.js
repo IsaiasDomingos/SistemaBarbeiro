@@ -21,7 +21,7 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// COMPONENTES VISUAIS (Estaticos para evitar erro insertBefore)
+// COMPONENTES VISUAIS
 const GlassContainer = ({ children, className = "", onClick }) => (
   <div onClick={onClick} className={`glass rounded-[2.5rem] p-8 ${className}`}>
     {children}
@@ -46,6 +46,7 @@ const App = () => {
   const [checkoutAtivo, setCheckoutAtivo] = useState(null);
   const [valorInput, setValorInput] = useState("50.00");
   const [acessoInput, setAcessoInput] = useState("");
+  const [showHistorico, setShowHistorico] = useState(false); // NOVO: Controle de visualização da tabela
   const [toasts, setToasts] = useState([]);
   const [novoCliente, setNovoCliente] = useState({
     nome: "",
@@ -77,32 +78,124 @@ const App = () => {
 
   const getFinanceStats = (barbeiroNome) => {
     const agora = new Date();
-    const hojeStart = new Date(
-      agora.getFullYear(),
-      agora.getMonth(),
-      agora.getDate()
-    ).getTime();
-    const semanaStart = new Date(
-      agora.getFullYear(),
-      agora.getMonth(),
-      agora.getDate() - agora.getDay()
-    ).getTime();
-    const mesStart = new Date(
-      agora.getFullYear(),
-      agora.getMonth(),
-      1
-    ).getTime();
+    const hojeStart = new Date(agora);
+    hojeStart.setHours(0, 0, 0, 0);
+
+    const semanaStart = new Date(agora);
+    semanaStart.setDate(agora.getDate() - agora.getDay());
+    semanaStart.setHours(0, 0, 0, 0);
+
+    const mesStart = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    mesStart.setHours(0, 0, 0, 0);
+
     const registros = barbeiroNome
       ? historicoAtendimentos.filter((h) => h.barbeiro === barbeiroNome)
       : historicoAtendimentos;
+
     const somar = (lista) =>
       lista.reduce((acc, h) => acc + (Number(h.valor) || 0), 0);
     const filtrarData = (lista, inicio) =>
-      lista.filter((h) => h.dataConclusao?.toMillis() >= inicio);
+      lista.filter((h) => h.dataConclusao?.toMillis() >= inicio.getTime());
+
     return {
       hoje: somar(filtrarData(registros, hojeStart)),
       semana: somar(filtrarData(registros, semanaStart)),
       mes: somar(filtrarData(registros, mesStart)),
+    };
+  };
+
+  // NOVO: LÓGICA DE DESTAQUES (MASTER)
+  const getAdvancedStats = () => {
+    const agora = new Date();
+
+    // 1. Definições de Tempo (Semana Atual)
+    const thisWeekStart = new Date(agora);
+    thisWeekStart.setDate(agora.getDate() - agora.getDay());
+    thisWeekStart.setHours(0, 0, 0, 0);
+
+    // 2. Definições de Tempo (Mês Passado)
+    const thisMonthStart = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    const lastMonthStart = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+
+    // 3. Definições de Tempo (Trimestre Passado)
+    const currentQuarter = Math.floor(agora.getMonth() / 3);
+    let lastQ = currentQuarter - 1;
+    let yearQ = agora.getFullYear();
+    if (lastQ < 0) { lastQ = 3; yearQ--; }
+    const lastQuarterStart = new Date(yearQ, lastQ * 3, 1);
+    const thisQuarterStart = new Date(agora.getFullYear(), currentQuarter * 3, 1);
+
+    // Arrays isolados
+    const histThisWeek = [];
+    const histLastMonth = [];
+    const histLastQuarter = [];
+
+    historicoAtendimentos.forEach(h => {
+      if (!h.dataConclusao) return;
+      const time = h.dataConclusao.toMillis();
+      if (time >= thisWeekStart.getTime()) histThisWeek.push(h);
+      if (time >= lastMonthStart.getTime() && time < thisMonthStart.getTime()) histLastMonth.push(h);
+      if (time >= lastQuarterStart.getTime() && time < thisQuarterStart.getTime()) histLastQuarter.push(h);
+    });
+
+    const groupByBarber = (arr) => {
+      const map = {};
+      arr.forEach(h => {
+        if (!map[h.barbeiro]) map[h.barbeiro] = { lucro: 0, count: 0, duracaoTotal: 0 };
+        map[h.barbeiro].lucro += Number(h.valor) || 0;
+        map[h.barbeiro].count += 1;
+        if (h.duracaoMinutos) map[h.barbeiro].duracaoTotal += h.duracaoMinutos;
+      });
+      return map;
+    };
+
+    // Calculos da Semana Atual
+    const weekMap = groupByBarber(histThisWeek);
+    let maxLucroW = { name: "-", val: 0 };
+    let maxCountW = { name: "-", val: 0 };
+    let maxSpeedW = { name: "-", val: Infinity };
+
+    Object.keys(weekMap).forEach(b => {
+      if (weekMap[b].lucro > maxLucroW.val) maxLucroW = { name: b, val: weekMap[b].lucro };
+      if (weekMap[b].count > maxCountW.val) maxCountW = { name: b, val: weekMap[b].count };
+      const avgSpeed = weekMap[b].duracaoTotal / weekMap[b].count;
+      if (weekMap[b].duracaoTotal > 0 && avgSpeed < maxSpeedW.val) maxSpeedW = { name: b, val: avgSpeed };
+    });
+
+    // Barbeiro do Mês (Mês Passado) -> Formula: Lucro + (Atendimentos*10) - penalidade de lentidao
+    const monthMap = groupByBarber(histLastMonth);
+    let monthWinnerName = "Nenhum no período";
+    let bestMonthScore = -1;
+    Object.keys(monthMap).forEach(b => {
+      const d = monthMap[b];
+      const avgSpeed = d.duracaoTotal ? (d.duracaoTotal / d.count) : 30; 
+      const score = d.lucro + (d.count * 10) - avgSpeed;
+      if (score > bestMonthScore) {
+        bestMonthScore = score;
+        monthWinnerName = b;
+      }
+    });
+
+    // Cliente VIP (Trimestre Passado)
+    const clientMap = {};
+    let topClientName = "Nenhum no período";
+    let topClientCount = 0;
+    histLastQuarter.forEach(h => {
+      if(!h.nome) return;
+      const n = h.nome.toUpperCase();
+      clientMap[n] = (clientMap[n] || 0) + 1;
+      if (clientMap[n] > topClientCount) {
+        topClientCount = clientMap[n];
+        topClientName = n;
+      }
+    });
+
+    return {
+      semanaLucro: maxLucroW.name !== "-" ? `${maxLucroW.name} (${formatCurrency(maxLucroW.val)})` : "-",
+      semanaAtend: maxCountW.name !== "-" ? `${maxCountW.name} (${maxCountW.val})` : "-",
+      semanaSpeed: maxSpeedW.name !== "-" ? `${maxSpeedW.name} (${Math.floor(maxSpeedW.val)}m/cliente)` : "-",
+      mesWinner: monthWinnerName,
+      trimestreClient: topClientName !== "NENHUM NO PERÍODO" ? `${topClientName} (${topClientCount} cortes)` : "Nenhum no período"
     };
   };
 
@@ -133,10 +226,11 @@ const App = () => {
       .onSnapshot((snap) =>
         setProfissionais(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
       );
+    // Expandido para 2000 para garantir que pegue o trimestre e o mes inteiro com segurança para o DONO
     const unsubHist = db
       .collection("historico_paiva")
       .orderBy("dataConclusao", "desc")
-      .limit(50)
+      .limit(2000)
       .onSnapshot((snap) =>
         setHistoricoAtendimentos(
           snap.docs.map((d) => ({ id: d.id, ...d.data() }))
@@ -187,13 +281,14 @@ const App = () => {
   };
 
   const limparHistoricoCompleto = async () => {
-    if (!confirm("Deseja apagar TODO o histórico?")) return;
+    if (!confirm("Deseja apagar TODO o histórico? Esta ação é permanente!")) return;
     try {
       const snap = await db.collection("historico_paiva").get();
       const batch = db.batch();
       snap.docs.forEach((doc) => batch.delete(doc.ref));
       await batch.commit();
       addToast("Histórico zerado.", "sucesso");
+      setShowHistorico(false); // Fecha a tabela ao zerar
     } catch (e) {
       addToast("Erro ao limpar.", "erro");
     }
@@ -509,20 +604,10 @@ const App = () => {
   }
 
   if (modo === "admin_barbeiro" && barbeiroLogado) {
-    const dAtual =
-      profissionais.find((p) => p.id === barbeiroLogado.id) || barbeiroLogado;
-    const emAtend = clientesFila.filter(
-      (c) => c.barbeiroPref === barbeiroLogado.nome && c.status === "atendendo"
-    );
+    const dAtual = profissionais.find((p) => p.id === barbeiroLogado.id) || barbeiroLogado;
+    const emAtend = clientesFila.filter((c) => c.barbeiroPref === barbeiroLogado.nome && c.status === "atendendo");
     const statsB = getFinanceStats(barbeiroLogado.nome);
-    const prox = clientesFila
-      .sort((a, b) => a.chegada - b.chegada)
-      .find(
-        (c) =>
-          c.status === "esperando" &&
-          (c.barbeiroPref === "Sem Preferência" ||
-            c.barbeiroPref === barbeiroLogado.nome)
-      );
+    const prox = clientesFila.sort((a, b) => a.chegada - b.chegada).find((c) => c.status === "esperando" && (c.barbeiroPref === "Sem Preferência" || c.barbeiroPref === barbeiroLogado.nome));
 
     return (
       <div className="min-h-screen bg-slate-950 p-8 flex flex-col items-center justify-center text-white">
@@ -658,19 +743,22 @@ const App = () => {
                   onClick={async () => {
                     if (dAtual.status !== "disponivel")
                       return addToast("PARA PROSSEGUIR VOCÊ DEVE ESTAR DISPONÍVEL", "erro");
+
+                    // INVISIVEL PARA O USUARIO: Registrando duracao para calcular o mais rapido
+                    let duracaoMinutos = 15; // default
+                    if (checkoutAtivo.chegada) {
+                      const ch = checkoutAtivo.chegada.toMillis ? checkoutAtivo.chegada.toMillis() : checkoutAtivo.chegada;
+                      duracaoMinutos = Math.max(1, Math.floor((Date.now() - ch) / 60000));
+                    }
+
                     await db.collection("historico_paiva").add({
-                      nome:
-                        checkoutAtivo.nome +
-                        " " +
-                        (checkoutAtivo.sobrenome || ""),
+                      nome: checkoutAtivo.nome + " " + (checkoutAtivo.sobrenome || ""),
                       barbeiro: barbeiroLogado.nome,
                       valor: parseFloat(valorInput),
+                      duracaoMinutos: duracaoMinutos, // Novo parametro para as estatisticas
                       dataConclusao: firebase.firestore.Timestamp.now(),
                     });
-                    await db
-                      .collection("fila_paiva")
-                      .doc(checkoutAtivo.id)
-                      .delete();
+                    await db.collection("fila_paiva").doc(checkoutAtivo.id).delete();
                     setCheckoutAtivo(null);
                     addToast("Finalizado!", "sucesso");
                   }}
@@ -690,6 +778,8 @@ const App = () => {
 
   if (modo === "gestao_master") {
     const stats = getFinanceStats();
+    const advStats = getAdvancedStats(); // Puxando a nova lógica de destaques
+
     return (
       <div className="min-h-screen bg-slate-950 p-8 text-white flex flex-col items-center overflow-y-auto custom-scrollbar">
         <div className="w-full max-w-6xl space-y-10 mb-20">
@@ -715,6 +805,7 @@ const App = () => {
               </div>
             </div>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-8 bg-slate-900/30 rounded-3xl border border-emerald-500/20">
               💰 Hoje: {formatCurrency(stats.hoje)}
@@ -726,6 +817,41 @@ const App = () => {
               🗓️ Mês: {formatCurrency(stats.mes)}
             </div>
           </div>
+
+          {/* NOVA SESSÃO: DESTAQUES E DESEMPENHO */}
+          <GlassContainer className="w-full space-y-6">
+            <h3 className="font-black uppercase tracking-tighter text-2xl mb-4">🏆 Destaques & Desempenho</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-8 bg-gradient-to-br from-yellow-600/20 to-yellow-900/10 rounded-3xl border border-yellow-500/30">
+                <h4 className="text-yellow-500 font-black uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2"><Crown size={14}/> BARBEIRO DO MÊS (Mês Passado)</h4>
+                <p className="text-3xl font-black uppercase text-white">{advStats.mesWinner}</p>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-blue-600/20 to-blue-900/10 rounded-3xl border border-blue-500/30">
+                <h4 className="text-blue-400 font-black uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2"><Users size={14}/> CLIENTE VIP (Trimestre Passado)</h4>
+                <p className="text-3xl font-black uppercase text-white">{advStats.trimestreClient}</p>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <h4 className="font-black uppercase text-sm mb-4 text-slate-500 tracking-widest">RANKING DA SEMANA ATUAL</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-6 bg-slate-900/40 rounded-3xl border border-emerald-500/20">
+                  <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest flex items-center gap-2 mb-2"><Banknote size={14}/> Maior Lucro</span>
+                  <span className="text-xl font-black uppercase">{advStats.semanaLucro}</span>
+                </div>
+                <div className="p-6 bg-slate-900/40 rounded-3xl border border-purple-500/20">
+                  <span className="text-[10px] text-purple-500 font-black uppercase tracking-widest flex items-center gap-2 mb-2"><Scissors size={14}/> Mais Atendimentos</span>
+                  <span className="text-xl font-black uppercase">{advStats.semanaAtend}</span>
+                </div>
+                <div className="p-6 bg-slate-900/40 rounded-3xl border border-orange-500/20">
+                  <span className="text-[10px] text-orange-500 font-black uppercase tracking-widest flex items-center gap-2 mb-2"><Zap size={14}/> Mais Rápido</span>
+                  <span className="text-xl font-black uppercase">{advStats.semanaSpeed}</span>
+                </div>
+              </div>
+            </div>
+          </GlassContainer>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <h4 className="text-yellow-500 font-black uppercase text-xs">
@@ -794,64 +920,76 @@ const App = () => {
               </div>
             </div>
           </div>
-          <GlassContainer className="w-full space-y-10">
-            <div className="flex items-center justify-between">
-              <h3 className="font-black uppercase tracking-tighter text-2xl flex items-center gap-3">
-                <Clock size={28} className="text-blue-500" /> Histórico
-                Detalhado
+          
+          {/* TABELA DE HISTÓRICO - OCULTA POR PADRÃO */}
+          <GlassContainer className="w-full space-y-6">
+            <div 
+              className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-all"
+              onClick={() => setShowHistorico(!showHistorico)}
+            >
+              <h3 className="font-black uppercase tracking-tighter text-2xl flex items-center gap-3 select-none">
+                <Clock size={28} className="text-blue-500" /> Histórico Detalhado
+                <span className="text-[10px] bg-slate-900 px-3 py-1 rounded-full text-slate-500 ml-4">
+                  {showHistorico ? "CLIQUE PARA OCULTAR" : "CLIQUE PARA MOSTRAR"}
+                </span>
               </h3>
-              <button
-                onClick={limparHistoricoCompleto}
-                className="bg-red-600/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-2xl font-black uppercase text-[9px] flex items-center gap-2 hover:bg-red-600 hover:text-white transition-all"
-              >
-                <Trash2 size={14} /> Limpar Histórico
-              </button>
+              {showHistorico && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); limparHistoricoCompleto(); }}
+                  className="bg-red-600/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-2xl font-black uppercase text-[9px] flex items-center gap-2 hover:bg-red-600 hover:text-white transition-all"
+                >
+                  <Trash2 size={14} /> Limpar Histórico
+                </button>
+              )}
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="text-[10px] uppercase font-black text-slate-700 border-b border-white/5">
-                  <tr>
-                    <th className="pb-6 px-4">DATA</th>
-                    <th className="pb-6 px-4">Cliente</th>
-                    <th className="pb-6 px-4 text-center">Barbeiro</th>
-                    <th className="pb-6 px-4 text-center">Valor</th>
-                    <th className="pb-6 px-4 text-right">Hora</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs">
-                  {historicoAtendimentos.map((h) => (
-                    <tr
-                      key={h.id}
-                      className="border-b border-white/5 hover:bg-white/5 transition-all"
-                    >
-                      <td className="py-6 px-4 font-black text-slate-400 font-mono">
-                        {h.dataConclusao?.toDate().toLocaleDateString("pt-BR")}
-                      </td>
-                      <td className="py-6 px-4 font-black uppercase text-slate-300 tracking-tighter text-lg">
-                        {h.nome}
-                      </td>
-                      <td className="py-6 px-4 text-center">
-                        <span className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-[10px] font-black uppercase text-yellow-500">
-                          <Scissors size={10} className="inline mr-1" />{" "}
-                          {h.barbeiro}
-                        </span>
-                      </td>
-                      <td className="py-6 px-4 text-center font-black text-emerald-400">
-                        {formatCurrency(h.valor || 0)}
-                      </td>
-                      <td className="py-6 px-4 text-right text-slate-500 font-mono">
-                        {h.dataConclusao
-                          ?.toDate()
-                          .toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                      </td>
+
+            {showHistorico && (
+              <div className="overflow-x-auto pt-6 border-t border-white/5">
+                <table className="w-full text-left">
+                  <thead className="text-[10px] uppercase font-black text-slate-700 border-b border-white/5">
+                    <tr>
+                      <th className="pb-6 px-4">DATA</th>
+                      <th className="pb-6 px-4">Cliente</th>
+                      <th className="pb-6 px-4 text-center">Barbeiro</th>
+                      <th className="pb-6 px-4 text-center">Valor</th>
+                      <th className="pb-6 px-4 text-right">Hora</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="text-xs">
+                    {historicoAtendimentos.map((h) => (
+                      <tr
+                        key={h.id}
+                        className="border-b border-white/5 hover:bg-white/5 transition-all"
+                      >
+                        <td className="py-6 px-4 font-black text-slate-400 font-mono">
+                          {h.dataConclusao?.toDate().toLocaleDateString("pt-BR")}
+                        </td>
+                        <td className="py-6 px-4 font-black uppercase text-slate-300 tracking-tighter text-lg">
+                          {h.nome}
+                        </td>
+                        <td className="py-6 px-4 text-center">
+                          <span className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-[10px] font-black uppercase text-yellow-500">
+                            <Scissors size={10} className="inline mr-1" />{" "}
+                            {h.barbeiro}
+                          </span>
+                        </td>
+                        <td className="py-6 px-4 text-center font-black text-emerald-400">
+                          {formatCurrency(h.valor || 0)}
+                        </td>
+                        <td className="py-6 px-4 text-right text-slate-500 font-mono">
+                          {h.dataConclusao
+                            ?.toDate()
+                            .toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </GlassContainer>
         </div>
         <ISDSignature />
