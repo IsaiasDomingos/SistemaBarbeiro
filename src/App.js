@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Tv, Lock, ArrowLeft, LogOut, Scissors, Crown, Trash2, Clock, Users,
   Eraser, Play, Calendar, X, Zap, Code2, Circle, Check, Info,
-  AlertCircle, DollarSign, Banknote, TrendingUp, Camera, UserPlus, Link, Edit2, Star, Heart, Mic, MessageCircle, RefreshCw
+  AlertCircle, DollarSign, Banknote, TrendingUp, Camera, UserPlus, Link, Edit2, Star, Heart, Mic, MessageCircle, RefreshCw, Trophy, Gift, Award
 } from "lucide-react";
 
 import firebase from "firebase/compat/app";
@@ -82,11 +82,8 @@ const App = () => {
   // 🎙️ CARREGADOR DE VOZES AVANÇADO
   const atualizarVozes = () => {
     if (window.speechSynthesis) {
-      // Pega todas as vozes do navegador
       let vozes = window.speechSynthesis.getVoices();
-      // Filtra apenas as que tem PT no código de idioma (Brasil e Portugal)
       let vozesPt = vozes.filter(v => v.lang.toLowerCase().includes('pt'));
-      
       setVozesDisponiveis(vozesPt);
       vozesRef.current = vozesPt;
     }
@@ -108,7 +105,7 @@ const App = () => {
     return () => unsubConfig();
   }, []);
 
-  // 🗣️ FUNÇÃO DA VOZ DA TV (COM ANTI-CRASH)
+  // 🗣️ FUNÇÃO DA VOZ DA TV
   const falarAnuncio = (nomeClienteCompleto, nomeBarbeiro, numCadeira) => {
     if (!window.speechSynthesis) return;
     const cadeiraTexto = numCadeira ? `na cadeira ${numCadeira}` : "";
@@ -116,7 +113,7 @@ const App = () => {
     
     setTimeout(() => {
         const synth = window.speechSynthesis;
-        synth.cancel(); // Limpa a garganta do navegador
+        synth.cancel(); 
         
         const msg = new SpeechSynthesisUtterance(texto);
         msg.lang = 'pt-BR';
@@ -175,41 +172,94 @@ const App = () => {
 
   const getAdvancedStats = () => {
     const agora = new Date();
+    const mesAtualIndex = agora.getMonth(); // 0-11
+    const diaAtual = agora.getDate();
+    const anoAtual = agora.getFullYear();
     
+    // Nomes
     const nomeMesAtual = agora.toLocaleDateString('pt-BR', { month: 'long' });
-    const dataMesPassado = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+    const dataMesPassado = new Date(anoAtual, mesAtualIndex - 1, 1);
     const nomeMesPassado = dataMesPassado.toLocaleDateString('pt-BR', { month: 'long' });
 
-    const thisMonthStart = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    // Datas Base para Rankings Comuns
+    const thisMonthStart = new Date(anoAtual, mesAtualIndex, 1);
     thisMonthStart.setHours(0,0,0,0);
-
-    const lastMonthStart = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+    const lastMonthStart = new Date(anoAtual, mesAtualIndex - 1, 1);
     
-    const currentQuarter = Math.floor(agora.getMonth() / 3);
-    let lastQ = currentQuarter - 1;
-    let yearQ = agora.getFullYear();
-    if (lastQ < 0) { lastQ = 3; yearQ--; }
-    const lastQuarterStart = new Date(yearQ, lastQ * 3, 1);
-    const thisQuarterStart = new Date(agora.getFullYear(), currentQuarter * 3, 1);
+    // ==========================================
+    // 🧠 LÓGICA DO BARBEIRO DO SEMESTRE
+    // ==========================================
+    let showBarbeiroSemestre = false;
+    let labelBarbeiroSemestre = "";
+    let bSemestreStart, bSemestreEnd;
 
-    const nomesTrimestres = {
-        0: "Janeiro, Fevereiro e Março",
-        1: "Abril, Maio e Junho",
-        2: "Julho, Agosto e Setembro",
-        3: "Outubro, Novembro e Dezembro"
-    };
-    const nomeTrimestrePassado = nomesTrimestres[lastQ];
+    // Julho (Mês 6): Mostra 1º Semestre
+    if (mesAtualIndex === 6) { 
+        showBarbeiroSemestre = true;
+        labelBarbeiroSemestre = "1º Semestre";
+        bSemestreStart = new Date(anoAtual, 0, 1);
+        bSemestreEnd = new Date(anoAtual, 6, 0); 
+    } 
+    // Janeiro (Mês 0): Mostra 2º Semestre
+    else if (mesAtualIndex === 0) {
+        showBarbeiroSemestre = true;
+        labelBarbeiroSemestre = "2º Semestre";
+        bSemestreStart = new Date(anoAtual - 1, 6, 1); 
+        bSemestreEnd = new Date(anoAtual - 1, 12, 0); 
+    }
+
+    // ==========================================
+    // 🧠 LÓGICA DO CLIENTE ELITE (AUTOMÁTICA)
+    // ==========================================
+    let showClienteElite = false;
+    let labelClienteElite = "";
+    let clienteStart, clienteEnd;
+    let isPremiumYear = false; // Flag para o destaque de fim de ano
+
+    // 1. Cliente Elite 1º Semestre (Visível em Julho)
+    if (mesAtualIndex === 6) {
+        showClienteElite = true;
+        labelClienteElite = "1º Semestre";
+        clienteStart = new Date(anoAtual, 0, 1); // 01/01
+        clienteEnd = new Date(anoAtual, 6, 0);   // 30/06
+    }
+    // 2. Cliente Elite 2º Semestre (Visível 10/12 a 19/12)
+    else if (mesAtualIndex === 11 && diaAtual >= 10 && diaAtual <= 19) {
+        showClienteElite = true;
+        labelClienteElite = "2º Semestre";
+        clienteStart = new Date(anoAtual, 6, 1);  // 01/07
+        clienteEnd = new Date(anoAtual, 11, 10); // Até o momento da apuração
+    }
+    // 3. Cliente Elite do ANO (Visível 20/12 a 31/12)
+    else if (mesAtualIndex === 11 && diaAtual >= 20) {
+        showClienteElite = true;
+        isPremiumYear = true; // Ativa layout dourado
+        labelClienteElite = "ANO " + anoAtual;
+        clienteStart = new Date(anoAtual, 0, 1); // 01/01
+        clienteEnd = new Date(anoAtual, 11, 31); // Ano todo
+    }
 
     const histThisMonth = [];
     const histLastMonth = [];
-    const histLastQuarter = [];
+    const histBarbeiroSemestre = [];
+    const histClienteElite = [];
 
     historicoAtendimentos.forEach((h) => {
       if (!h.dataConclusao) return;
       const time = h.dataConclusao.toMillis();
+      
       if (time >= thisMonthStart.getTime()) histThisMonth.push(h);
       if (time >= lastMonthStart.getTime() && time < thisMonthStart.getTime()) histLastMonth.push(h);
-      if (time >= lastQuarterStart.getTime() && time < thisQuarterStart.getTime()) histLastQuarter.push(h);
+      
+      // Coleta dados Barbeiro Semestre
+      if (showBarbeiroSemestre && time >= bSemestreStart.getTime() && time <= bSemestreEnd.getTime()) {
+          histBarbeiroSemestre.push(h);
+      }
+
+      // Coleta dados Cliente Elite (Semestre ou Ano)
+      if (showClienteElite && time >= clienteStart.getTime() && time <= clienteEnd.getTime()) {
+          histClienteElite.push(h);
+      }
     });
 
     const groupByBarber = (arr) => {
@@ -252,21 +302,38 @@ const App = () => {
       }
     });
 
-    const clientMap = {};
-    let topClient = { name: "Nenhum no período", count: 0, phone: "", meses: nomeTrimestrePassado };
-    
-    histLastQuarter.forEach((h) => {
-      if (!h.nome) return;
-      const n = h.nome.toUpperCase();
-      if (!clientMap[n]) clientMap[n] = { count: 0, phone: h.whatsapp || "" };
-      clientMap[n].count += 1;
-      
-      if (clientMap[n].count > topClient.count) {
-        topClient.count = clientMap[n].count;
-        topClient.name = n;
-        topClient.phone = clientMap[n].phone; 
-      }
-    });
+    // 🏆 Calculo Barbeiro Semestre
+    let barbeiroSemestreWinner = "Nenhum";
+    if (showBarbeiroSemestre) {
+        const semMap = groupByBarber(histBarbeiroSemestre);
+        let bestSemScore = -1;
+        Object.keys(semMap).forEach((b) => {
+            const d = semMap[b];
+            const avgSpeed = d.duracaoTotal ? d.duracaoTotal / d.count : 30;
+            const score = d.lucro + (d.count * 10) + (d.fieis * 20) - avgSpeed;
+            if (score > bestSemScore) {
+                bestSemScore = score;
+                barbeiroSemestreWinner = b;
+            }
+        });
+    }
+
+    // 🏆 Calculo Cliente Elite (Semestre ou Ano)
+    let topClientElite = { name: "Nenhum", count: 0, phone: "" };
+    if (showClienteElite) {
+        const clientMap = {};
+        histClienteElite.forEach((h) => {
+            if (!h.nome) return;
+            const n = h.nome.toUpperCase();
+            if (!clientMap[n]) clientMap[n] = { count: 0, phone: h.whatsapp || "" };
+            clientMap[n].count += 1;
+            if (clientMap[n].count > topClientElite.count) {
+                topClientElite.count = clientMap[n].count;
+                topClientElite.name = n;
+                topClientElite.phone = clientMap[n].phone; 
+            }
+        });
+    }
 
     return {
       mesAtualNome: nomeMesAtual,
@@ -276,7 +343,14 @@ const App = () => {
       mesSpeed: maxSpeedM.name !== "-" ? `${maxSpeedM.name} (${Math.floor(maxSpeedM.val)}m/corte)` : "-",
       mesFiel: maxRequisitadoM.name !== "-" ? `${maxRequisitadoM.name} (${maxRequisitadoM.val} pedidos)` : "-",
       eliteWinner: monthWinnerName,
-      trimestreClient: topClient,
+      // Dados Semestrais e Anuais
+      showBarbeiroSemestre,
+      labelBarbeiroSemestre,
+      barbeiroSemestreWinner,
+      showClienteElite,
+      labelClienteElite,
+      isPremiumYear, // Define se mostra a coroa dourada
+      clienteEliteData: topClientElite
     };
   };
 
@@ -738,16 +812,16 @@ const App = () => {
         setNovoProf({ nome: "", matricula: "", cadeira: "" }); setProfEditando(null);
     };
 
-    const handleWhatsAppElite = () => {
-        const cliente = advStats.trimestreClient;
-        if (!cliente || !cliente.phone) {
+    // WHATSAPP GENERICO PARA CLIENTES
+    const handleWhatsAppClient = (clientObj, motivo) => {
+        if (!clientObj || !clientObj.phone) {
             return addToast("O cliente vencedor não possui WhatsApp cadastrado.", "erro");
         }
-        const brinde = window.prompt(`Qual será o prêmio/brinde para ${cliente.name}?`);
+        const brinde = window.prompt(`Qual será o prêmio/brinde para ${clientObj.name}?`);
         if (!brinde) return; 
         
-        const texto = `Parabéns ${cliente.name}, você é o nosso cliente elite do trimestre (${cliente.meses}), você ganhou de brinde: ${brinde}!`;
-        const phoneRaw = cliente.phone.replace(/\D/g, ''); 
+        const texto = `Parabéns ${clientObj.name}, você é o nosso ${motivo}, você ganhou de brinde: ${brinde}!`;
+        const phoneRaw = clientObj.phone.replace(/\D/g, ''); 
         const finalPhone = phoneRaw.length <= 11 ? `55${phoneRaw}` : phoneRaw; 
         
         window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(texto)}`, '_blank');
@@ -773,24 +847,57 @@ const App = () => {
           <GlassContainer className="w-full space-y-6">
             <h3 className="font-black uppercase tracking-tighter text-2xl mb-4">🏆 Destaques & Desempenho</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* CARD BARBEIRO MES */}
               <div className="p-8 bg-gradient-to-br from-yellow-600/20 to-yellow-900/10 rounded-3xl border border-yellow-500/30">
                 <h4 className="text-yellow-500 font-black uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2"><Star size={14} /> BARBEIRO ELITE ({advStats.mesPassadoNome})</h4>
                 <p className="text-3xl font-black uppercase text-white">{advStats.eliteWinner}</p>
               </div>
-              <div className="p-8 bg-gradient-to-br from-blue-600/20 to-blue-900/10 rounded-3xl border border-blue-500/30 relative">
-                <h4 className="text-blue-400 font-black uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2"><Users size={14} /> CLIENTE ELITE (Trimestre Passado)</h4>
-                <p className="text-3xl font-black uppercase text-white flex justify-between items-center">
-                    {advStats.trimestreClient.name}
-                    {advStats.trimestreClient.count > 0 && <span className="text-sm font-bold text-slate-400">({advStats.trimestreClient.count} cortes)</span>}
-                </p>
-                {advStats.trimestreClient.count > 0 && (
-                    <button onClick={handleWhatsAppElite} className="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-black uppercase text-[10px] tracking-widest p-3 rounded-xl flex items-center justify-center gap-2 transition-all">
-                        <MessageCircle size={16} /> Enviar Prêmio via WhatsApp
-                    </button>
-                )}
-              </div>
+
+              {/* CARD CLIENTE SEMESTRE (CONDICIONAL) */}
+              {advStats.showClienteElite && !advStats.isPremiumYear && (
+                  <div className="p-8 bg-gradient-to-br from-blue-600/20 to-blue-900/10 rounded-3xl border border-blue-500/30 relative">
+                    <h4 className="text-blue-400 font-black uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2"><Users size={14} /> CLIENTE ELITE ({advStats.labelClienteElite})</h4>
+                    <p className="text-3xl font-black uppercase text-white flex justify-between items-center">
+                        {advStats.clienteEliteData.name}
+                        {advStats.clienteEliteData.count > 0 && <span className="text-sm font-bold text-slate-400">({advStats.clienteEliteData.count} atendimentos)</span>}
+                    </p>
+                    {advStats.clienteEliteData.count > 0 && (
+                        <button onClick={() => handleWhatsAppClient(advStats.clienteEliteData, `cliente elite do ${advStats.labelClienteElite}`)} className="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-black uppercase text-[10px] tracking-widest p-3 rounded-xl flex items-center justify-center gap-2 transition-all">
+                            <MessageCircle size={16} /> Enviar Prêmio via WhatsApp
+                        </button>
+                    )}
+                  </div>
+              )}
+
+              {/* CARD CLIENTE ANUAL - O REI DO ANO (CONDICIONAL) */}
+              {advStats.showClienteElite && advStats.isPremiumYear && (
+                  <div className="p-8 bg-gradient-to-br from-pink-600/20 to-pink-900/10 rounded-3xl border border-pink-500/30 relative shadow-2xl shadow-pink-500/20">
+                    <div className="absolute -top-4 -right-4 bg-yellow-500 p-3 rounded-full shadow-lg animate-bounce"><Crown size={24} className="text-black" /></div>
+                    <h4 className="text-pink-400 font-black uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2"><Gift size={14} /> CLIENTE ELITE DO {advStats.labelClienteElite}</h4>
+                    <p className="text-4xl font-black uppercase text-white flex flex-col">
+                        {advStats.clienteEliteData.name}
+                        <span className="text-sm font-bold text-slate-400 mt-1">({advStats.clienteEliteData.count} ATENDIMENTOS NO ANO)</span>
+                    </p>
+                    {advStats.clienteEliteData.count > 0 && (
+                        <button onClick={() => handleWhatsAppClient(advStats.clienteEliteData, `cliente do ano de ${new Date().getFullYear()}`)} className="mt-6 w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase text-[12px] tracking-widest p-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg">
+                            <MessageCircle size={18} /> 🎁 ENVIAR SUPER PRÊMIO
+                        </button>
+                    )}
+                  </div>
+              )}
+
+              {/* CARD BARBEIRO SEMESTRE (CONDICIONAL) */}
+              {advStats.showBarbeiroSemestre && (
+                  <div className="p-8 bg-gradient-to-br from-purple-600/20 to-purple-900/10 rounded-3xl border border-purple-500/30 relative col-span-1 md:col-span-2">
+                    <h4 className="text-purple-400 font-black uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2"><Trophy size={14} /> BARBEIRO CAMPEÃO DO {advStats.labelBarbeiroSemestre.toUpperCase()}</h4>
+                    <p className="text-4xl font-black uppercase text-white neon-purple">{advStats.barbeiroSemestreWinner}</p>
+                  </div>
+              )}
+
             </div>
 
+            {/* RESTO DO PAINEL MANTIDO IGUAL */}
             <div className="pt-6">
               <h4 className="font-black uppercase text-sm mb-4 text-slate-500 tracking-widest">RANKING DE {advStats.mesAtualNome.toUpperCase()}</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -814,6 +921,7 @@ const App = () => {
             </div>
           </GlassContainer>
 
+          {/* FORMULARIOS E LISTAS MANTIDOS IGUAIS AO ANTERIOR */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-8">
                 {/* FORMULARIO BARBEIRO */}
@@ -830,7 +938,7 @@ const App = () => {
                 <button onClick={salvarProfissional} className={`w-full p-4 rounded-xl font-black text-black transition-all ${profEditando ? 'bg-blue-500' : 'bg-yellow-600 hover:bg-yellow-500'}`}>{profEditando ? "SALVAR ALTERAÇÕES" : "CADASTRAR BARBEIRO"}</button>
                 </div>
 
-                {/* PAINEL DE CONFIGURAÇÃO DE VOZ MELHORADO */}
+                {/* PAINEL DE CONFIGURAÇÃO DE VOZ */}
                 <div className="space-y-4 bg-slate-900/20 p-6 rounded-[2rem] border border-white/5">
                     <div className="flex justify-between items-center">
                         <h4 className="text-blue-400 font-black uppercase text-xs flex items-center gap-2"><Mic size={16}/> VOZ DA TV</h4>
@@ -905,16 +1013,7 @@ const App = () => {
             {showHistorico && (
               <div className="overflow-x-auto pt-6 border-t border-white/5">
                 <table className="w-full text-left">
-                  <thead className="text-[10px] uppercase font-black text-slate-700 border-b border-white/5">
-                      <tr>
-                          <th className="pb-6 px-4">DATA</th>
-                          <th className="pb-6 px-4">Cliente</th>
-                          <th className="pb-6 px-4">Contato (Invisível TV)</th>
-                          <th className="pb-6 px-4 text-center">Barbeiro</th>
-                          <th className="pb-6 px-4 text-center">Valor</th>
-                          <th className="pb-6 px-4 text-right">Hora</th>
-                        </tr>
-                    </thead>
+                  <thead className="text-[10px] uppercase font-black text-slate-700 border-b border-white/5"><tr><th className="pb-6 px-4">DATA</th><th className="pb-6 px-4">Cliente</th><th className="pb-6 px-4">Contato (Invisível TV)</th><th className="pb-6 px-4 text-center">Barbeiro</th><th className="pb-6 px-4 text-center">Valor</th><th className="pb-6 px-4 text-right">Hora</th></tr></thead>
                   <tbody className="text-xs">
                     {historicoAtendimentos.map((h) => (
                       <tr key={h.id} className="border-b border-white/5 hover:bg-white/5 transition-all">
