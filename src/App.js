@@ -24,18 +24,21 @@ const db = firebase.firestore();
 // ================= COMPONENTES VISUAIS PADRONIZADOS =================
 
 const GlassContainer = ({ children, className = "", onClick }) => (
-  <div onClick={onClick} className={`glass rounded-[2.5rem] p-8 ${className}`}>
+  <div onClick={onClick} className={`glass rounded-[2.5rem] p-6 md:p-8 ${className}`}>
     {children}
   </div>
 );
 
-const ISDSignature = () => (
-  <div className="fixed bottom-3 left-0 right-0 flex flex-col justify-center items-center pointer-events-none z-50 gap-1">
-    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]">SISTEMA EM TESTE (V1.0.0)</span>
-    <div className="flex items-center gap-2 text-xs font-black text-white/50 uppercase tracking-[0.2em]">
-      <Code2 size={14} /> Developed by ISD Systems
+// RODAPÉ FIXO GLOBAL
+const FixedFooter = () => (
+  <footer className="fixed bottom-0 left-0 w-full z-[100] py-2 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md border-t border-white/10">
+    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]">
+      SISTEMA EM TESTE (V1.0.0)
+    </span>
+    <div className="flex items-center gap-1.5 text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mt-1">
+      <Code2 size={12} /> Developed by ISD Systems
     </div>
-  </div>
+  </footer>
 );
 
 const GlobalClock = ({ currentTime }) => (
@@ -55,6 +58,17 @@ const BarberPole = ({ className = "" }) => (
   </div>
 );
 
+// POSTE FINO PARA A TELA DA TV
+const MiniBarberPole = () => (
+  <div className="w-4 md:w-6 h-full flex flex-col items-center py-1 shrink-0">
+     <div className="w-3 h-3 md:w-4 md:h-4 bg-[#f5deb3] rounded-full shadow-[inset_-2px_-2px_6px_rgba(0,0,0,0.3)] mb-0.5 z-10 shrink-0"></div>
+     <div className="flex-1 w-2 md:w-3 rounded-b-sm border border-slate-700 shadow-xl overflow-hidden relative">
+        <div className="absolute inset-0" style={{ backgroundImage: 'repeating-linear-gradient(-45deg, #fff, #fff 8px, #dc2626 8px, #dc2626 16px, #fff 16px, #fff 24px, #2563eb 24px, #2563eb 32px)' }}></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 pointer-events-none"></div>
+     </div>
+  </div>
+);
+
 const RioSilhouetteSVG = () => (
     <svg viewBox="0 0 500 150" className="w-full h-full text-slate-500/20 fill-current">
       <path d="M 10 100 Q 50 90 80 100 Q 120 110 150 80 L 180 30 Q 200 10 220 30 L 250 80 Q 280 100 320 90 L 350 110 L 400 110 L 420 100 L 440 105 L 460 100 L 480 110 L 490 120" stroke="currentColor" strokeWidth="2" fill="none" />
@@ -64,7 +78,7 @@ const RioSilhouetteSVG = () => (
     </svg>
 );
 
-const EliteHeader = ({ subtitle, className = "", extraCentralElement = null }) => (
+const EliteHeader = ({ subtitle, className = "" }) => (
     <div className={`flex items-stretch justify-center relative shrink-0 w-full border-b border-white/10 mb-6 ${className}`} style={{ minHeight: "130px" }}>
        <BarberPole className="mx-2 md:mx-6" />
        <div className="flex-1 flex flex-col items-center justify-between relative z-10 pt-4 pb-6 max-w-4xl">
@@ -78,7 +92,6 @@ const EliteHeader = ({ subtitle, className = "", extraCentralElement = null }) =
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-widest text-white leading-none w-full" style={{ textShadow: "2px 2px 0px #334155, 4px 4px 0px #0f172a" }}>
                   BARBEARIA ELITE CARIOCA
               </h1>
-              {extraCentralElement && <div className="mt-4">{extraCentralElement}</div>}
            </div>
            <div className="relative z-10 w-full flex justify-center mt-6">
               <p className="text-yellow-500 font-bold tracking-[0.4em] md:tracking-[0.8em] text-[9px] md:text-xs uppercase neon-yellow px-4 py-1.5 bg-slate-950/70 rounded-full backdrop-blur-md border border-yellow-500/20 shadow-lg">
@@ -121,17 +134,16 @@ const App = () => {
   const [showDestaques, setShowDestaques] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
   const [showEquipe, setShowEquipe] = useState(false);
-  const [showSeguranca, setShowSeguranca] = useState(false); // Nova Senha Dinâmica
+  const [showSeguranca, setShowSeguranca] = useState(false);
   const [showFatBarbeiro, setShowFatBarbeiro] = useState(false);
   const [showDesempBarbeiro, setShowDesempBarbeiro] = useState(false);
-  const [showSazonalBarbeiro, setShowSazonalBarbeiro] = useState(false); // Novo Histórico Barbeiro
+  const [showSazonalBarbeiro, setShowSazonalBarbeiro] = useState(false);
 
   const [profEditando, setProfEditando] = useState(null);
   const [novoProf, setNovoProf] = useState({ nome: "", cpf: "", telefone: "", cadeira: "" });
   const [novoCliente, setNovoCliente] = useState({ nome: "", cpf: "", whatsapp: "", servico: ["CABELO"] });
   const [loginCpf, setLoginCpf] = useState("");
 
-  // ESTADOS GLOBAIS FASE 5
   const [currentTime, setCurrentTime] = useState(new Date());
   const [senhaMasterConfig, setSenhaMasterConfig] = useState("123456");
   const [senhaAtualInput, setSenhaAtualInput] = useState("");
@@ -145,13 +157,11 @@ const App = () => {
   const audioRef = useRef(null);
   const prevClientesRef = useRef([]);
 
-  // Relógio Global
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Buscar Configurações Gerais e Cofre
   useEffect(() => {
     const unsubConfig = db.collection("configuracoes_paiva").doc("geral").onSnapshot((doc) => {
       if (doc.exists) {
@@ -178,7 +188,6 @@ const App = () => {
     
     const primeiroNome = nomeClienteCompleto.split(" ")[0];
 
-    // FUNÇÃO QUE RODA A VOZ APÓS O SOM
     const dispararVoz = () => {
         if (window.speechSynthesis) {
             const cadeiraTexto = numCadeira ? `na cadeira ${numCadeira}` : "";
@@ -209,12 +218,10 @@ const App = () => {
         }
     };
 
-    // TOCA A CAMPAINHA EXATAMENTE PRIMEIRO
     if (audioRef.current) {
         audioRef.current.volume = 1;
         audioRef.current.currentTime = 0;
         
-        // EVENTO: Só fala quando o som acabar 100%
         audioRef.current.onended = () => {
             audioRef.current.onended = null;
             dispararVoz();
@@ -222,7 +229,7 @@ const App = () => {
 
         audioRef.current.play().catch((e) => {
             console.log("Som bloqueado:", e);
-            dispararVoz(); // Fallback
+            dispararVoz(); 
         });
     } else {
         dispararVoz();
@@ -286,7 +293,6 @@ const App = () => {
     };
   };
 
-  // Motor Sazonal Sincronizado com o Cofre de Troféus
   const getAdvancedStats = () => {
     const agora = new Date();
     const m = agora.getMonth();
@@ -351,7 +357,6 @@ const App = () => {
       if (score > bestMonthScore) { bestMonthScore = score; monthWinnerName = b; }
     });
 
-    // Funções auxiliares para calcular campeões
     const calcChampion = (arr) => {
         const map = groupByBarber(arr); let best = -1; let winner = "Nenhum"; let total = 0;
         Object.keys(map).forEach((b) => {
@@ -384,7 +389,6 @@ const App = () => {
     let cSem = showSem ? calcClient(histSem) : { name: "Nenhum", count: 0, phone: "" };
     let cAno = showAno ? calcClient(histAno) : { name: "Nenhum", count: 0, phone: "" };
 
-    // 🛡️ MÁGICA DO COFRE: Se não tiver histórico, resgata os campeões apagados do Cofre
     const mCofre = cofreTrofeus?.master || {};
     if (showTri && triStats.total === 0 && mCofre.lucroTri > 0) {
         triStats.winner = mCofre.bTriWinner; triStats.total = mCofre.lucroTri; cTri = mCofre.clientTri;
@@ -409,7 +413,6 @@ const App = () => {
     };
   };
 
-  // Motor Sazonal INDIVIDUAL para a tela do Barbeiro
   const getBarbeiroSazonalStats = (barbeiroNome) => {
     const adv = getAdvancedStats();
     const todosDoBarbeiro = historicoAtendimentos.filter(h => h.barbeiro === barbeiroNome);
@@ -440,7 +443,6 @@ const App = () => {
     let semStats = adv.showSem ? calculateForPeriod(startSem, endSem) : null;
     let anoStats = adv.showAno ? calculateForPeriod(startAno, endAno) : null;
 
-    // 🛡️ MÁGICA DO COFRE PARA BARBEIRO: Se a gaveta dele estiver zerada, puxa os recordes antigos
     const bCofre = cofreTrofeus?.barbeiros?.[barbeiroNome] || {};
     if (adv.showTri && triStats.count === 0 && bCofre.tri?.count > 0) triStats = bCofre.tri;
     if (adv.showSem && semStats.count === 0 && bCofre.sem?.count > 0) semStats = bCofre.sem;
@@ -573,18 +575,14 @@ const App = () => {
     addToast("Fila limpa.", "info");
   };
 
-  // 🏆 LÓGICA DO COFRE DE TROFÉUS ANTES DE APAGAR O HISTÓRICO
   const limparHistoricoCompleto = async () => {
     const pin = window.prompt("PERIGO: PARA APAGAR O HISTÓRICO E FECHAR O CAIXA, DIGITE A SENHA MASTER:");
     if (pin !== senhaMasterConfig) return addToast("Senha Incorreta.", "erro");
     
     try {
       const advStats = getAdvancedStats();
-      
       const barbeirosFechamento = {};
-      profissionais.forEach(p => {
-         barbeirosFechamento[p.nome] = getBarbeiroSazonalStats(p.nome);
-      });
+      profissionais.forEach(p => { barbeirosFechamento[p.nome] = getBarbeiroSazonalStats(p.nome); });
 
       const novoCofreData = {
          dataFechamento: firebase.firestore.Timestamp.now(),
@@ -620,40 +618,40 @@ const App = () => {
 
   if (modo === "bloqueado") {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-white text-center">
+      <div className="h-screen overflow-hidden bg-slate-950 flex flex-col items-center justify-center p-6 text-white text-center pb-12">
         <GlobalClock currentTime={currentTime} />
         <AlertCircle size={80} className="text-red-500 mb-6 animate-pulse" />
         <h1 className="text-4xl font-black uppercase tracking-widest text-red-500 mb-2">ACESSO REVOGADO</h1>
         <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">Este link não é mais válido no sistema.</p>
-        <ISDSignature />
+        <FixedFooter />
       </div>
     );
   }
 
   if (modo === "selecao_cadastro") {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white">
+      <div className="h-screen overflow-hidden bg-slate-950 flex flex-col text-white pb-12 relative">
         <GlobalClock currentTime={currentTime} />
         <div className="p-4 md:p-6 pb-0 absolute top-0 left-0 z-50">
           <button onClick={() => setModo("selecao")} className="text-slate-500 font-black text-[10px] uppercase flex items-center gap-2 hover:text-white transition-all"><ArrowLeft size={14} /> VOLTAR</button>
         </div>
         <EliteHeader subtitle="CADASTRO" />
-        <div className="flex-1 flex flex-col items-center justify-center p-6 pb-20">
-          <h2 className="text-3xl font-black mb-12 uppercase italic neon-yellow text-center">ESCOLHA UMA OPÇÃO</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
+          <h2 className="text-2xl md:text-3xl font-black mb-8 uppercase italic neon-yellow text-center">ESCOLHA UMA OPÇÃO</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
             <GlassContainer onClick={() => setModo("cliente_login")} className="flex flex-col items-center gap-4 cursor-pointer border-white/10 hover:border-yellow-500 transition-all hover:bg-slate-900/80 text-center">
-              <Search size={48} className="text-yellow-500" />
-              <span className="font-black text-2xl uppercase">JÁ TENHO CADASTRO</span>
-              <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Acesso rápido via CPF</span>
+              <Search size={40} className="text-yellow-500" />
+              <span className="font-black text-xl uppercase">JÁ TENHO CADASTRO</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Acesso rápido via CPF</span>
             </GlassContainer>
             <GlassContainer onClick={() => setModo("cliente_registro_novo")} className="flex flex-col items-center gap-4 cursor-pointer border-white/10 hover:border-blue-500 transition-all hover:bg-slate-900/80 text-center">
-              <UserPlus size={48} className="text-blue-500" />
-              <span className="font-black text-2xl uppercase">NOVO CADASTRO</span>
-              <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Primeira vez no salão</span>
+              <UserPlus size={40} className="text-blue-500" />
+              <span className="font-black text-xl uppercase">NOVO CADASTRO</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Primeira vez no salão</span>
             </GlassContainer>
           </div>
         </div>
-        <ISDSignature />
+        <FixedFooter />
         <EliteToasts toasts={toasts} />
       </div>
     );
@@ -661,23 +659,23 @@ const App = () => {
 
   if (modo === "cliente_login") {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white">
+      <div className="h-screen overflow-hidden bg-slate-950 flex flex-col text-white pb-12 relative">
         <GlobalClock currentTime={currentTime} />
         <div className="p-4 md:p-6 pb-0 absolute top-0 left-0 z-50">
           <button onClick={() => setModo("selecao_cadastro")} className="text-slate-500 font-black text-[10px] uppercase flex items-center gap-2 hover:text-white transition-all"><ArrowLeft size={14} /> VOLTAR</button>
         </div>
         <EliteHeader subtitle="CADASTRO" />
-        <div className="flex-1 flex items-center justify-center p-6 pb-20">
+        <div className="flex-1 flex items-center justify-center p-4 min-h-0">
           <GlassContainer className="w-full max-w-md space-y-6">
             <div className="text-center space-y-1">
               <h2 className="text-3xl font-black uppercase tracking-tighter text-yellow-500">BEM-VINDO DE VOLTA</h2>
               <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">DIGITE SEU CPF PARA CONTINUAR</p>
             </div>
-            <input type="tel" placeholder="APENAS NÚMEROS (11 DÍGITOS)" className="w-full p-5 bg-slate-950 rounded-2xl border border-white/5 text-center text-white font-black text-xl outline-none focus:border-yellow-500 tracking-widest" value={loginCpf} onChange={(e) => setLoginCpf(e.target.value.replace(/\D/g, "").slice(0, 11))} />
-            <button disabled={loginCpf.length !== 11 && loginCpf !== "0"} onClick={handleBuscaCpf} className={`w-full p-6 rounded-2xl font-black uppercase text-sm tracking-[0.2em] transition-all ${loginCpf.length === 11 || loginCpf === "0" ? "bg-yellow-600 text-white shadow-xl shadow-yellow-900/20" : "bg-slate-800 text-slate-600"}`}>ENTRAR</button>
+            <input type="tel" placeholder="APENAS NÚMEROS (11 DÍGITOS)" className="w-full p-4 bg-slate-950 rounded-2xl border border-white/5 text-center text-white font-black text-xl outline-none focus:border-yellow-500 tracking-widest" value={loginCpf} onChange={(e) => setLoginCpf(e.target.value.replace(/\D/g, "").slice(0, 11))} />
+            <button disabled={loginCpf.length !== 11 && loginCpf !== "0"} onClick={handleBuscaCpf} className={`w-full p-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] transition-all ${loginCpf.length === 11 || loginCpf === "0" ? "bg-yellow-600 text-white shadow-xl shadow-yellow-900/20" : "bg-slate-800 text-slate-600"}`}>ENTRAR</button>
           </GlassContainer>
         </div>
-        <ISDSignature />
+        <FixedFooter />
         <EliteToasts toasts={toasts} />
       </div>
     );
@@ -685,27 +683,27 @@ const App = () => {
 
   if (modo === "cliente_registro_novo") {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white">
+      <div className="h-screen overflow-hidden bg-slate-950 flex flex-col text-white pb-12 relative">
         <GlobalClock currentTime={currentTime} />
         <div className="p-4 md:p-6 pb-0 absolute top-0 left-0 z-50">
           <button onClick={() => setModo("selecao_cadastro")} className="text-slate-500 font-black text-[10px] uppercase flex items-center gap-2 hover:text-white transition-all"><ArrowLeft size={14} /> VOLTAR</button>
         </div>
         <EliteHeader subtitle="CADASTRO" />
-        <div className="flex-1 flex items-center justify-center p-6 pb-20">
-          <GlassContainer className="w-full max-w-lg space-y-6">
-            <div className="text-center space-y-1">
-              <h2 className="text-4xl font-black uppercase tracking-tighter text-blue-500">NOVO CLIENTE</h2>
-              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">PREENCHA SEUS DADOS OU DIGITE "0" PARA IGNORAR</p>
+        <div className="flex-1 flex items-center justify-center p-4 min-h-0">
+          <GlassContainer className="w-full max-w-lg space-y-4">
+            <div className="text-center space-y-1 mb-2">
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-blue-500">NOVO CLIENTE</h2>
+              <p className="text-slate-400 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">PREENCHA SEUS DADOS OU DIGITE "0" PARA IGNORAR</p>
             </div>
-            <div className="space-y-4">
-              <input type="text" placeholder="NOME E SOBRENOME (Obrigatório)" className="w-full p-5 bg-slate-950 rounded-2xl border border-white/5 text-white font-bold outline-none focus:border-blue-500 uppercase" value={novoCliente.nome} onChange={(e) => setNovoCliente({ ...novoCliente, nome: e.target.value.toUpperCase() })} />
-              <input type="tel" placeholder="CPF (Apenas números)" className="w-full p-5 bg-slate-950 rounded-2xl border border-white/5 text-white font-bold outline-none focus:border-blue-500" value={novoCliente.cpf} onChange={(e) => setNovoCliente({ ...novoCliente, cpf: e.target.value.replace(/\D/g, "").slice(0, 11) })} />
-              <input type="tel" placeholder="WHATSAPP COM DDD (Ex: 21999998888)" className="w-full p-5 bg-slate-950 rounded-2xl border border-white/5 text-white font-bold outline-none focus:border-blue-500" value={novoCliente.whatsapp} onChange={(e) => setNovoCliente({ ...novoCliente, whatsapp: e.target.value.replace(/\D/g, "").slice(0, 11) })} />
+            <div className="space-y-3">
+              <input type="text" placeholder="NOME E SOBRENOME (Obrigatório)" className="w-full p-4 bg-slate-950 rounded-2xl border border-white/5 text-white font-bold outline-none focus:border-blue-500 uppercase" value={novoCliente.nome} onChange={(e) => setNovoCliente({ ...novoCliente, nome: e.target.value.toUpperCase() })} />
+              <input type="tel" placeholder="CPF (Apenas números)" className="w-full p-4 bg-slate-950 rounded-2xl border border-white/5 text-white font-bold outline-none focus:border-blue-500" value={novoCliente.cpf} onChange={(e) => setNovoCliente({ ...novoCliente, cpf: e.target.value.replace(/\D/g, "").slice(0, 11) })} />
+              <input type="tel" placeholder="WHATSAPP COM DDD (Ex: 21999998888)" className="w-full p-4 bg-slate-950 rounded-2xl border border-white/5 text-white font-bold outline-none focus:border-blue-500" value={novoCliente.whatsapp} onChange={(e) => setNovoCliente({ ...novoCliente, whatsapp: e.target.value.replace(/\D/g, "").slice(0, 11) })} />
             </div>
-            <button disabled={!novoCliente.nome.trim() || !novoCliente.cpf || !novoCliente.whatsapp} onClick={prosseguirServicos} className={`w-full p-6 rounded-2xl font-black uppercase text-sm tracking-[0.2em] transition-all ${novoCliente.nome.trim() && novoCliente.cpf && novoCliente.whatsapp ? "bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-900/20" : "bg-slate-800 text-slate-600"}`}>PROSSEGUIR</button>
+            <button disabled={!novoCliente.nome.trim() || !novoCliente.cpf || !novoCliente.whatsapp} onClick={prosseguirServicos} className={`w-full p-5 mt-2 rounded-2xl font-black uppercase text-sm tracking-[0.2em] transition-all ${novoCliente.nome.trim() && novoCliente.cpf && novoCliente.whatsapp ? "bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-900/20" : "bg-slate-800 text-slate-600"}`}>PROSSEGUIR</button>
           </GlassContainer>
         </div>
-        <ISDSignature />
+        <FixedFooter />
         <EliteToasts toasts={toasts} />
       </div>
     );
@@ -713,24 +711,24 @@ const App = () => {
 
   if (modo === "cliente_servicos") {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white">
+      <div className="h-screen overflow-hidden bg-slate-950 flex flex-col text-white pb-12 relative">
         <GlobalClock currentTime={currentTime} />
         <EliteHeader subtitle="CADASTRO" />
-        <div className="flex-1 flex items-center justify-center p-6 pb-20">
-          <GlassContainer className="w-full max-w-lg space-y-6">
-            <div className="text-center space-y-1">
-              <h2 className="text-4xl font-black uppercase tracking-tighter neon-yellow">O QUE VAMOS FAZER?</h2>
+        <div className="flex-1 flex items-center justify-center p-4 min-h-0">
+          <GlassContainer className="w-full max-w-lg space-y-4">
+            <div className="text-center space-y-1 mb-2">
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter neon-yellow">O QUE VAMOS FAZER?</h2>
               <p className="text-blue-400 font-bold uppercase text-[10px] tracking-widest neon-blue">{novoCliente.nome}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-4">
+            <div className="grid grid-cols-2 gap-3">
               {["CABELO", "BARBA", "SOBRANCELHA", "OUTROS"].map((s) => (
-                <button key={s} onClick={() => { let servs = [...novoCliente.servico]; if (servs.includes(s)) servs = servs.filter((x) => x !== s); else servs.push(s); if (servs.length === 0) servs = ["CABELO"]; setNovoCliente({ ...novoCliente, servico: servs }); }} className={`py-6 rounded-2xl font-black text-sm border-2 transition-all ${novoCliente.servico.includes(s) ? "bg-yellow-500 border-yellow-400 text-slate-950 shadow-lg shadow-yellow-900/20" : "bg-slate-900 border-white/5 text-slate-400"}`}>{s}</button>
+                <button key={s} onClick={() => { let servs = [...novoCliente.servico]; if (servs.includes(s)) servs = servs.filter((x) => x !== s); else servs.push(s); if (servs.length === 0) servs = ["CABELO"]; setNovoCliente({ ...novoCliente, servico: servs }); }} className={`py-4 md:py-6 rounded-2xl font-black text-xs md:text-sm border-2 transition-all ${novoCliente.servico.includes(s) ? "bg-yellow-500 border-yellow-400 text-slate-950 shadow-lg shadow-yellow-900/20" : "bg-slate-900 border-white/5 text-slate-400"}`}>{s}</button>
               ))}
             </div>
-            <button onClick={() => setModo("barbeiro_choice")} className="w-full p-8 mt-4 rounded-[2.5rem] font-black uppercase text-sm tracking-[0.3em] transition-all bg-yellow-600 text-white hover:bg-yellow-500">ESCOLHER PROFISSIONAL</button>
+            <button onClick={() => setModo("barbeiro_choice")} className="w-full p-5 mt-4 rounded-3xl font-black uppercase text-xs md:text-sm tracking-[0.3em] transition-all bg-yellow-600 text-white hover:bg-yellow-500">ESCOLHER PROFISSIONAL</button>
           </GlassContainer>
         </div>
-        <ISDSignature />
+        <FixedFooter />
       </div>
     );
   }
@@ -738,61 +736,63 @@ const App = () => {
   if (modo === "barbeiro_choice") {
     const disponiveis = profissionais.filter((p) => p.status === "disponivel" || p.status === "volto_logo").sort((a, b) => Number(a.cadeira) - Number(b.cadeira));
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white text-center">
+      <div className="h-screen overflow-hidden bg-slate-950 flex flex-col text-white text-center pb-12 relative">
         <GlobalClock currentTime={currentTime} />
         <EliteHeader subtitle="CADASTRO" />
-        <div className="flex-1 flex flex-col items-center justify-center p-6 pb-20">
-          <h2 className="text-4xl font-black mb-12 uppercase italic neon-yellow">QUEM VAI TE ATENDER?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-            <GlassContainer onClick={() => enviarParaFila("Sem Preferência")} className="bg-yellow-600/10 border-yellow-500/20 flex flex-col items-center gap-2 cursor-pointer hover:bg-yellow-600 transition-all">
-              <Zap size={32} className="text-yellow-500" />
-              <span className="font-black text-xl uppercase">SEM PREFERÊNCIA</span>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
+          <h2 className="text-2xl md:text-4xl font-black mb-6 uppercase italic neon-yellow shrink-0">QUEM VAI TE ATENDER?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl overflow-y-auto custom-scrollbar pr-2 pb-4">
+            <GlassContainer onClick={() => enviarParaFila("Sem Preferência")} className="bg-yellow-600/10 border-yellow-500/20 flex flex-col items-center gap-2 cursor-pointer hover:bg-yellow-600 transition-all !p-4">
+              <Zap size={24} className="text-yellow-500" />
+              <span className="font-black text-lg uppercase">SEM PREFERÊNCIA</span>
             </GlassContainer>
             {disponiveis.map((p) => (
-              <GlassContainer key={p.id} onClick={() => enviarParaFila(p.nome)} className="flex flex-col items-center gap-2 cursor-pointer border-white/10 hover:border-yellow-500 transition-all">
-                <Scissors size={24} className="text-yellow-500" />
-                <span className="font-black text-xl uppercase">{p.nome}</span>
+              <GlassContainer key={p.id} onClick={() => enviarParaFila(p.nome)} className="flex flex-col items-center gap-2 cursor-pointer border-white/10 hover:border-yellow-500 transition-all !p-4">
+                <Scissors size={20} className="text-yellow-500" />
+                <span className="font-black text-lg uppercase">{p.nome}</span>
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">CADEIRA {p.cadeira}</span>
-                <div className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${p.status === "disponivel" ? "text-emerald-500" : "text-orange-500"}`}>
+                <div className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${p.status === "disponivel" ? "text-emerald-500" : "text-orange-500"}`}>
                   <div className={`w-2 h-2 rounded-full animate-pulse ${p.status === "disponivel" ? "bg-emerald-500" : "bg-orange-500"}`} /> {p.status === "disponivel" ? "DISPONÍVEL" : "VOLTO LOGO"}
                 </div>
               </GlassContainer>
             ))}
           </div>
-          <button onClick={() => setModo("cliente_servicos")} className="mt-8 text-slate-500 font-black uppercase text-xs hover:text-white transition-all">VOLTAR PARA SERVIÇOS</button>
+          <button onClick={() => setModo("cliente_servicos")} className="mt-4 text-slate-500 font-black uppercase text-[10px] md:text-xs hover:text-white transition-all shrink-0">VOLTAR PARA SERVIÇOS</button>
         </div>
-        <ISDSignature />
+        <FixedFooter />
       </div>
     );
   }
 
   if (modo === "selecao") {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white relative overflow-hidden">
+      <div className="h-screen overflow-hidden bg-slate-950 flex flex-col text-white relative pb-12">
         <GlobalClock currentTime={currentTime} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-yellow-500/5 rounded-full blur-[120px] pointer-events-none" />
         <EliteHeader subtitle="BEM-VINDO(A)" />
-        <div className="flex-1 flex items-center justify-center p-6 flex-col pb-20">
-          <button onClick={() => setModo("selecao_cadastro")} className="relative glass h-80 w-80 md:h-[400px] md:w-[400px] rounded-[5rem] flex flex-col items-center justify-center gap-8 border-2 border-yellow-500/30 shadow-2xl z-10 hover:scale-105 transition-all">
-            <Scissors size={100} className="text-yellow-500" />
-            <div className="space-y-2">
-              <span className="block font-black text-4xl md:text-5xl uppercase tracking-tighter text-center">QUERO CORTAR</span>
-              <span className="block text-blue-400 font-bold uppercase text-[10px] tracking-[0.4em] opacity-70 text-center">TOQUE PARA INICIAR</span>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
+          <button onClick={() => setModo("selecao_cadastro")} className="relative glass h-56 w-56 md:h-[300px] md:w-[300px] rounded-[4rem] flex flex-col items-center justify-center gap-4 border-2 border-yellow-500/30 shadow-2xl z-10 hover:scale-105 transition-all mb-8 shrink-0">
+            <Scissors size={64} className="text-yellow-500" />
+            <div className="space-y-1 mt-2">
+              <span className="block font-black text-2xl md:text-3xl uppercase tracking-tighter text-center leading-tight">
+                TOQUE AQUI<br/>PARA INICIAR
+              </span>
             </div>
           </button>
-          <div className="relative z-10 w-full flex justify-between items-end mt-12 max-w-5xl mx-auto">
-            <button onClick={() => setModo("painel")} className="opacity-100 hover:scale-105 p-5 bg-blue-900/20 border border-blue-500/30 rounded-3xl flex flex-col items-center gap-2 shadow-lg shadow-blue-900/20 transition-all group">
-              <Tv size={28} className="text-blue-400 group-hover:text-blue-300" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 group-hover:text-blue-300">PAINEL TV</span>
+          
+          <div className="relative z-10 w-full flex justify-between items-end max-w-5xl mx-auto shrink-0 px-4">
+            <button onClick={() => setModo("painel")} className="opacity-100 hover:scale-105 p-4 md:p-5 bg-blue-900/20 border border-blue-500/30 rounded-3xl flex flex-col items-center gap-2 shadow-lg shadow-blue-900/20 transition-all group">
+              <Tv size={24} className="text-blue-400 group-hover:text-blue-300" />
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-blue-400 group-hover:text-blue-300">PAINEL TV</span>
             </button>
-            <div className="glass-slim px-6 py-4 rounded-[2rem] border border-white/5 flex items-center gap-4 bg-slate-900/40">
-              <Lock size={14} className="text-slate-600" />
-              <input type="password" placeholder="PIN" className="w-32 bg-transparent text-center font-black text-xs outline-none text-white focus:text-yellow-500" value={acessoInput} onChange={(e) => setAcessoInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
-              <button onClick={handleLogin} className="bg-blue-600 px-6 py-2 rounded-xl font-bold uppercase text-xs text-white">OK</button>
+            <div className="glass-slim px-4 md:px-6 py-3 md:py-4 rounded-[2rem] border border-white/5 flex items-center gap-3 md:gap-4 bg-slate-900/40">
+              <Lock size={14} className="text-slate-600 hidden sm:block" />
+              <input type="password" placeholder="PIN" className="w-24 md:w-32 bg-transparent text-center font-black text-[10px] md:text-xs outline-none text-white focus:text-yellow-500 tracking-widest" value={acessoInput} onChange={(e) => setAcessoInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
+              <button onClick={handleLogin} className="bg-blue-600 px-4 md:px-6 py-2 rounded-xl font-bold uppercase text-[10px] md:text-xs text-white">OK</button>
             </div>
           </div>
         </div>
-        <ISDSignature />
+        <FixedFooter />
         <EliteToasts toasts={toasts} />
       </div>
     );
@@ -811,8 +811,7 @@ const App = () => {
     const numRows = totalCards > 5 ? 2 : 1;
 
     return (
-      <div className="h-screen w-screen overflow-hidden bg-slate-950 text-white flex flex-col relative">
-        <GlobalClock currentTime={currentTime} />
+      <div className="h-screen w-screen overflow-hidden bg-slate-950 text-white flex flex-col relative pb-12">
         {!audioDestravado && (
           <div onClick={() => {
               if (window.speechSynthesis) {
@@ -830,9 +829,7 @@ const App = () => {
                  }).catch(() => {});
               }
               setAudioDestravado(true);
-            }}
-            className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center cursor-pointer"
-          >
+            }} className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center cursor-pointer">
             <div className="bg-blue-600 p-12 rounded-[3rem] shadow-[0_0_50px_rgba(37,99,235,0.5)] animate-bounce flex flex-col items-center gap-6 border-4 border-white/20">
               <Volume2 size={72} className="text-white" />
               <span className="text-4xl font-black uppercase tracking-widest text-white text-center">CLIQUE AQUI PARA ATIVAR A TV</span>
@@ -841,23 +838,36 @@ const App = () => {
           </div>
         )}
 
-        <div className="flex items-start relative z-20 w-full shrink-0">
-          <div className="flex flex-col items-start gap-3 absolute left-4 md:left-8 top-6 z-30">
-            <button onClick={() => setModo("selecao")} className="bg-slate-900 p-3 rounded-2xl text-slate-500 hover:text-white transition-all"><ArrowLeft size={24} /></button>
+        <header className="relative w-full flex items-center justify-between px-2 py-1 bg-slate-950 shadow-md border-b border-white/10 h-14 shrink-0 z-20">
+          <div className="h-full flex items-center gap-2">
+             <button onClick={() => setModo("selecao")} className="p-2 text-slate-500 hover:text-white transition-all"><ArrowLeft size={20} /></button>
+             <MiniBarberPole />
           </div>
-          <EliteHeader 
-            subtitle="PAINEL DE ATENDIMENTO" 
-            className="w-full"
-            extraCentralElement={
-                <div className="bg-blue-600/20 border border-blue-500/30 px-6 py-2 rounded-2xl text-center shadow-lg shadow-blue-900/20 inline-block">
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-1">Total na Barbearia</span>
-                    <span className="text-2xl font-black text-white leading-none">{totalGeralEspera} clientes aguardando</span>
-                </div>
-            }
-          />
-        </div>
+          
+          <div className="flex-1 flex items-center justify-center space-x-2 md:space-x-4 overflow-hidden">
+             <div className="flex gap-1 hidden sm:flex">
+                {[...Array(5)].map((_, i) => <Star key={i} size={12} className="text-yellow-500 fill-yellow-500" />)}
+             </div>
+             <h1 className="text-lg md:text-xl font-black uppercase tracking-widest text-white truncate text-shadow-sm">
+                BARBEARIA ELITE CARIOCA
+             </h1>
+             <div className="h-6 w-px bg-white/20 mx-2 hidden md:block"></div>
+             <div className="bg-blue-600/20 border border-blue-500/30 px-3 py-1 rounded-lg flex items-center space-x-2 shrink-0">
+                <span className="text-[10px] text-blue-300 uppercase tracking-widest font-bold">Aguardando:</span>
+                <span className="text-lg font-black text-white leading-none">{totalGeralEspera}</span>
+             </div>
+          </div>
+          
+          <div className="h-full flex items-center gap-3 pr-2">
+             <div className="flex flex-col items-end justify-center hidden sm:flex">
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{currentTime.toLocaleDateString("pt-BR")}</span>
+                <span className="text-sm font-black text-white tracking-widest font-mono flex items-center gap-1"><Clock size={12} className="text-blue-400"/> {currentTime.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+             </div>
+             <MiniBarberPole />
+          </div>
+        </header>
 
-        <div className="flex-1 flex p-4 min-w-0 overflow-hidden relative z-10 w-full">
+        <div className="flex-1 flex p-4 pb-4 min-w-0 overflow-hidden relative z-10 w-full">
           <div className="grid gap-4 flex-1 w-full h-full min-h-0" style={{ gridTemplateColumns: `repeat(${numCols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${numRows}, minmax(0, 1fr))` }}>
             <div className="glass rounded-[2rem] p-4 h-full flex flex-col border border-blue-500/20 bg-slate-900/30 overflow-hidden">
               <h3 className="text-center font-black text-blue-400 uppercase text-xs md:text-sm tracking-widest mb-3 border-b border-white/5 pb-2 shrink-0">
@@ -874,6 +884,7 @@ const App = () => {
                 ))}
               </div>
             </div>
+            
             {profsAtivos.map((p) => {
               const esperandoProf = clientesFila.filter((c) => c.barbeiroPref === p.nome && c.status === "esperando");
               const countWaiting = esperandoProf.length;
@@ -882,6 +893,7 @@ const App = () => {
               if (emAtendimentoProf) displayList.push({ ...emAtendimentoProf, isAtendimento: true });
               const remainingSlots = maxDisplayItems - displayList.length;
               displayList = [...displayList, ...esperandoProf.slice(0, remainingSlots)];
+              
               return (
                 <div key={p.id} className="glass rounded-[2rem] p-4 flex flex-col border border-yellow-500/20 bg-slate-900/30 overflow-hidden">
                   <h3 className="text-center font-black text-yellow-400 uppercase text-xs md:text-sm tracking-widest mb-3 border-b border-white/5 pb-2 shrink-0">
@@ -907,7 +919,7 @@ const App = () => {
             })}
           </div>
         </div>
-        <ISDSignature />
+        <FixedFooter />
       </div>
     );
   }
@@ -936,14 +948,14 @@ const App = () => {
     };
 
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white">
+      <div className="min-h-screen bg-slate-950 flex flex-col text-white pb-16">
         <GlobalClock currentTime={currentTime} />
         <div className="relative z-50 p-6 pb-0 absolute top-0 left-0">
           {!isIsolado && (
             <button onClick={() => { setBarbeiroLogado(null); setModo("selecao"); }} className="text-slate-500 font-black text-[10px] uppercase flex items-center gap-2 hover:text-white transition-all"><LogOut size={14} /> SAIR</button>
           )}
         </div>
-        <EliteHeader subtitle={`MEU PAINEL - ${barbeiroLogado.nome.toUpperCase()}`} />
+        <EliteHeader subtitle={`MEU PAINEL - ${barbeiroLogado.nome.toUpperCase()}`} className="pt-6" />
         
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col items-center pb-24">
           <div className="w-full max-w-5xl space-y-8">
@@ -1044,7 +1056,7 @@ const App = () => {
               )}
             </GlassContainer>
 
-            {/* FASE 5: HISTÓRICO SAZONAL DO BARBEIRO (LÓGICA ESPELHADA) */}
+            {/* FASE 5: HISTÓRICO SAZONAL DO BARBEIRO */}
             {(statSazonal.showTri || statSazonal.showSem || statSazonal.showAno) && (
                 <GlassContainer className="w-full bg-slate-900/30">
                   <div className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-all group" onClick={() => setShowSazonalBarbeiro(!showSazonalBarbeiro)}>
@@ -1119,7 +1131,7 @@ const App = () => {
             </div>
           </div>
         )}
-        <ISDSignature />
+        <FixedFooter />
         <EliteToasts toasts={toasts} />
       </div>
     );
@@ -1193,19 +1205,38 @@ const App = () => {
     };
 
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col text-white">
+      <div className="min-h-screen overflow-x-hidden bg-slate-950 flex flex-col text-white pb-16">
         <GlobalClock currentTime={currentTime} />
         <div className="p-4 md:p-6 pb-0 absolute top-0 left-0 z-50">
           <button onClick={() => setModo("selecao")} className="text-slate-500 font-black text-[10px] uppercase flex items-center gap-2 hover:text-white transition-all"><ArrowLeft size={14} /> VOLTAR</button>
         </div>
-        <EliteHeader subtitle="PAINEL MASTER" />
+        
+        {/* Adicionado pt-6 para respirar e não cortar o topo dos postes */}
+        <EliteHeader subtitle="PAINEL MASTER" className="pt-6" />
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 flex flex-col items-center">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 flex flex-col items-center pb-24">
           <div className="w-full max-w-6xl space-y-8 mb-20">
-            <div className="flex justify-end items-center">
-              <div className="flex gap-4">
-                <button onClick={limparFilaCompleta} className="bg-red-600/10 text-red-500 border border-red-500/20 px-6 py-4 rounded-3xl font-black uppercase text-[10px] flex items-center gap-2 hover:bg-red-600 hover:text-white transition-all"><Eraser size={18} /> ZERAR FILA</button>
-              </div>
+            
+            {/* VOZ DA TV E ZERAR FILA (NOVO LAYOUT PROMOVIDO) */}
+            <div className="flex flex-col lg:flex-row justify-between items-center gap-6 w-full bg-slate-900/30 p-6 rounded-[2.5rem] border border-white/5">
+               <div className="flex-1 w-full flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex items-center gap-2 shrink-0">
+                     <Mic size={24} className="text-blue-400" />
+                     <h4 className="text-blue-400 font-black uppercase tracking-widest text-sm">ÁUDIO TV</h4>
+                  </div>
+                  <select className="flex-1 w-full max-w-sm p-4 bg-slate-950 rounded-xl border border-white/5 outline-none focus:border-blue-500 text-white appearance-none text-xs font-bold" value={vozSelecionadaUI} onChange={(e) => setVozSelecionadaUI(e.target.value)}>
+                      <option value="">Automática ({vozesDisponiveis.length} vozes)</option>
+                      {vozesDisponiveis.map((v) => (<option key={v.name} value={v.name}>{v.name}</option>))}
+                  </select>
+                  <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                     <button onClick={() => { window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance("Atenção, Teste de voz ativado."); msg.lang = "pt-BR"; if (vozSelecionadaUI) { const vozEncontrada = vozesDisponiveis.find((v) => v.name === vozSelecionadaUI); if (vozEncontrada) msg.voice = vozEncontrada; } window.speechSynthesis.speak(msg); }} className="p-4 rounded-xl font-black text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all text-[10px] uppercase tracking-widest">Testar</button>
+                     <button onClick={async () => { await db.collection("configuracoes_paiva").doc("geral").set({ vozTV: vozSelecionadaUI }, { merge: true }); addToast("Voz da TV salva!", "sucesso"); }} className="p-4 rounded-xl font-black text-black bg-emerald-500 hover:bg-emerald-400 transition-all text-[10px] uppercase tracking-widest">Salvar</button>
+                     <button onClick={atualizarVozes} className="p-4 rounded-xl font-black text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-all" title="Buscar Vozes"><RefreshCw size={16} /></button>
+                  </div>
+               </div>
+               <div className="shrink-0 w-full lg:w-auto border-t border-white/5 pt-4 lg:border-t-0 lg:pt-0 lg:border-l lg:pl-6">
+                  <button onClick={limparFilaCompleta} className="w-full lg:w-auto bg-red-600/10 text-red-500 border border-red-500/20 px-8 py-4 rounded-2xl font-black uppercase text-xs flex justify-center items-center gap-3 hover:bg-red-600 hover:text-white transition-all"><Eraser size={20} /> ZERAR FILA</button>
+               </div>
             </div>
 
             {/* SEÇÃO FATURAMENTO */}
@@ -1320,41 +1351,32 @@ const App = () => {
                 {showEquipe ? <ChevronUp className="text-slate-500 group-hover:text-white transition-all" /> : <ChevronDown className="text-slate-500 group-hover:text-white transition-all" />}
               </div>
               {showEquipe && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 mt-4 border-t border-white/5">
-                  <div className="space-y-8">
-                    <div className="space-y-4 bg-slate-950/50 p-6 rounded-[2rem] border border-white/5">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-yellow-500 font-black uppercase text-xs">{profEditando ? "EDITAR BARBEIRO" : "NOVO BARBEIRO"}</h4>
-                        {profEditando && (<button onClick={() => { setProfEditando(null); setNovoProf({ nome: "", cpf: "", telefone: "", cadeira: "" }); }} className="text-[10px] text-slate-500 hover:text-white uppercase font-bold">Cancelar</button>)}
-                      </div>
-                      <input type="text" placeholder="NOME" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500 uppercase" value={novoProf.nome} onChange={(e) => setNovoProf({ ...novoProf, nome: e.target.value.toUpperCase() })} />
-                      <div className="grid grid-cols-2 gap-4">
-                        <input type="tel" placeholder="CPF" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500" value={novoProf.cpf} onChange={(e) => setNovoProf({ ...novoProf, cpf: e.target.value.replace(/\D/g, "").slice(0, 11) })} />
-                        <input type="tel" placeholder="TELEFONE (DDD)" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500" value={novoProf.telefone} onChange={(e) => setNovoProf({ ...novoProf, telefone: e.target.value.replace(/\D/g, "") })} />
-                      </div>
-                      <input type="number" placeholder="Nº CADEIRA" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500" value={novoProf.cadeira} onChange={(e) => setNovoProf({ ...novoProf, cadeira: e.target.value })} />
-                      <button onClick={salvarProfissional} className={`w-full p-4 rounded-xl font-black text-black transition-all ${profEditando ? "bg-blue-500" : "bg-yellow-600 hover:bg-yellow-500"}`}>{profEditando ? "SALVAR ALTERAÇÕES" : "CADASTRAR BARBEIRO"}</button>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 mt-4 border-t border-white/5">
+                  <div className="space-y-4 bg-slate-950/50 p-6 rounded-[2rem] border border-white/5 h-fit">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-yellow-500 font-black uppercase text-xs">{profEditando ? "EDITAR BARBEIRO" : "NOVO BARBEIRO"}</h4>
+                      {profEditando && (<button onClick={() => { setProfEditando(null); setNovoProf({ nome: "", cpf: "", telefone: "", cadeira: "" }); }} className="text-[10px] text-slate-500 hover:text-white uppercase font-bold">Cancelar</button>)}
                     </div>
-                    <div className="space-y-4 bg-slate-950/50 p-6 rounded-[2rem] border border-white/5">
-                      <div className="flex justify-between items-center"><h4 className="text-blue-400 font-black uppercase text-xs flex items-center gap-2"><Mic size={16} /> VOZ DA TV</h4><button onClick={atualizarVozes} className="flex items-center gap-1 text-[9px] text-blue-500 hover:text-white transition-all bg-blue-500/10 px-2 py-1 rounded-full uppercase font-bold"><RefreshCw size={10} /> Buscar Vozes Online</button></div>
-                      <select className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-blue-500 text-white appearance-none" value={vozSelecionadaUI} onChange={(e) => setVozSelecionadaUI(e.target.value)}><option value="">Automática ({vozesDisponiveis.length} vozes encontradas)</option>{vozesDisponiveis.map((v) => (<option key={v.name} value={v.name}>{v.name}</option>))}</select>
-                      <div className="flex gap-2">
-                        <button onClick={() => { window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance("Atenção, Teste de voz ativado."); msg.lang = "pt-BR"; if (vozSelecionadaUI) { const vozEncontrada = vozesDisponiveis.find((v) => v.name === vozSelecionadaUI); if (vozEncontrada) msg.voice = vozEncontrada; } window.speechSynthesis.speak(msg); }} className="flex-1 p-3 rounded-xl font-black text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all text-xs">TESTAR VOZ</button>
-                        <button onClick={async () => { await db.collection("configuracoes_paiva").doc("geral").set({ vozTV: vozSelecionadaUI }, { merge: true }); addToast("Voz da TV salva!", "sucesso"); }} className="flex-1 p-3 rounded-xl font-black text-black bg-emerald-500 hover:bg-emerald-400 transition-all text-xs">SALVAR NA NUVEM</button>
-                      </div>
+                    <input type="text" placeholder="NOME" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500 uppercase" value={novoProf.nome} onChange={(e) => setNovoProf({ ...novoProf, nome: e.target.value.toUpperCase() })} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input type="tel" placeholder="CPF" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500" value={novoProf.cpf} onChange={(e) => setNovoProf({ ...novoProf, cpf: e.target.value.replace(/\D/g, "").slice(0, 11) })} />
+                      <input type="tel" placeholder="TELEFONE (DDD)" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500" value={novoProf.telefone} onChange={(e) => setNovoProf({ ...novoProf, telefone: e.target.value.replace(/\D/g, "") })} />
                     </div>
+                    <input type="number" placeholder="Nº CADEIRA" className="w-full p-4 bg-slate-900 rounded-xl border border-white/5 outline-none focus:border-yellow-500" value={novoProf.cadeira} onChange={(e) => setNovoProf({ ...novoProf, cadeira: e.target.value })} />
+                    <button onClick={salvarProfissional} className={`w-full p-4 rounded-xl font-black text-black transition-all mt-2 ${profEditando ? "bg-blue-500" : "bg-yellow-600 hover:bg-yellow-500"}`}>{profEditando ? "SALVAR ALTERAÇÕES" : "CADASTRAR BARBEIRO"}</button>
                   </div>
+                  
                   <div className="space-y-3 h-[450px] overflow-y-auto pr-2 custom-scrollbar">
                     {sortedProfsMaster.map((p) => (
                       <div key={p.id} className={`p-4 rounded-2xl flex justify-between items-center border transition-all ${profEditando === p.id ? "bg-blue-900/20 border-blue-500/50" : "bg-slate-950/50 border-white/5"}`}>
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center font-black text-slate-500">{p.cadeira || "-"}</div>
-                          <div>
-                            <span className="font-black uppercase text-sm block text-white">{p.nome}</span>
-                            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">PIN: {p.matricula} | CPF: {p.cpf || "Sem CPF"}</span>
+                          <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center font-black text-slate-500 shrink-0">{p.cadeira || "-"}</div>
+                          <div className="overflow-hidden">
+                            <span className="font-black uppercase text-sm block text-white truncate">{p.nome}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono truncate block">PIN: {p.matricula} | {p.cpf || "Sem CPF"}</span>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 shrink-0">
                           <button onClick={() => enviarLinkBarbeiro(p)} className="p-2.5 bg-green-900/20 text-green-500 hover:bg-green-600 hover:text-white transition-all rounded-lg" title="Enviar Link Seguro via WhatsApp"><MessageCircle size={16} /></button>
                           <button onClick={() => { setProfEditando(p.id); setNovoProf({ nome: p.nome, cpf: p.cpf || "", telefone: p.telefone || "", cadeira: p.cadeira || "", }); }} className="p-2.5 bg-slate-800 rounded-lg text-slate-400 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all" title="Editar"><Edit2 size={16} /></button>
                           <button onClick={() => { if (window.confirm(`Deseja demitir/excluir ${p.nome}? O link de acesso dele será destruído para sempre.`)) { db.collection("profissionais").doc(p.id).delete(); } }} className="p-2.5 bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Excluir"><Trash2 size={16} /></button>
@@ -1442,7 +1464,7 @@ const App = () => {
             
           </div>
         </div>
-        <ISDSignature />
+        <FixedFooter />
         <EliteToasts toasts={toasts} />
       </div>
     );
