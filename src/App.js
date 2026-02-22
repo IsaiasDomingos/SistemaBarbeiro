@@ -735,29 +735,38 @@ const App = () => {
 
   if (modo === "barbeiro_choice") {
     const disponiveis = profissionais.filter((p) => p.status === "disponivel" || p.status === "volto_logo").sort((a, b) => Number(a.cadeira) - Number(b.cadeira));
+    
+    // Grid dinâmico para espalhar os barbeiros na tela e não rolar
+    const totalItems = disponiveis.length + 1;
+    let gridColsClass = "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+    if (totalItems <= 3) gridColsClass = "grid-cols-1 sm:grid-cols-2 md:grid-cols-3";
+    else if (totalItems >= 8) gridColsClass = "grid-cols-2 md:grid-cols-4 lg:grid-cols-5";
+
     return (
       <div className="h-screen overflow-hidden bg-slate-950 flex flex-col text-white text-center pb-12 relative">
         <GlobalClock currentTime={currentTime} />
         <EliteHeader subtitle="CADASTRO" />
-        <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
-          <h2 className="text-2xl md:text-4xl font-black mb-6 uppercase italic neon-yellow shrink-0">QUEM VAI TE ATENDER?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl overflow-y-auto custom-scrollbar pr-2 pb-4">
-            <GlassContainer onClick={() => enviarParaFila("Sem Preferência")} className="bg-yellow-600/10 border-yellow-500/20 flex flex-col items-center gap-2 cursor-pointer hover:bg-yellow-600 transition-all !p-4">
-              <Zap size={24} className="text-yellow-500" />
-              <span className="font-black text-lg uppercase">SEM PREFERÊNCIA</span>
-            </GlassContainer>
+        <div className="flex-1 flex flex-col items-center justify-start p-4 min-h-0 w-full max-w-6xl mx-auto">
+          <h2 className="text-2xl md:text-4xl font-black mb-4 md:mb-8 uppercase italic neon-yellow shrink-0">QUEM VAI TE ATENDER?</h2>
+          
+          <div className={`grid ${gridColsClass} gap-3 md:gap-4 w-full place-content-center flex-1 min-h-0`}>
+            <div onClick={() => enviarParaFila("Sem Preferência")} className="glass bg-yellow-600/10 border border-yellow-500/30 rounded-3xl flex flex-col items-center justify-center p-4 md:p-6 cursor-pointer hover:bg-yellow-600 hover:text-slate-950 transition-all group">
+              <Zap size={28} className="text-yellow-500 group-hover:text-slate-950 mb-2" />
+              <span className="font-black text-sm md:text-lg uppercase leading-tight">SEM PREFERÊNCIA</span>
+            </div>
             {disponiveis.map((p) => (
-              <GlassContainer key={p.id} onClick={() => enviarParaFila(p.nome)} className="flex flex-col items-center gap-2 cursor-pointer border-white/10 hover:border-yellow-500 transition-all !p-4">
-                <Scissors size={20} className="text-yellow-500" />
-                <span className="font-black text-lg uppercase">{p.nome}</span>
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">CADEIRA {p.cadeira}</span>
-                <div className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${p.status === "disponivel" ? "text-emerald-500" : "text-orange-500"}`}>
+              <div key={p.id} onClick={() => enviarParaFila(p.nome)} className="glass rounded-3xl flex flex-col items-center justify-center p-4 md:p-6 cursor-pointer border border-white/10 hover:border-yellow-500 transition-all">
+                <Scissors size={24} className="text-yellow-500 mb-2" />
+                <span className="font-black text-sm md:text-lg uppercase leading-tight">{p.nome}</span>
+                <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">CADEIRA {p.cadeira}</span>
+                <div className={`text-[8px] md:text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 mt-2 ${p.status === "disponivel" ? "text-emerald-500" : "text-orange-500"}`}>
                   <div className={`w-2 h-2 rounded-full animate-pulse ${p.status === "disponivel" ? "bg-emerald-500" : "bg-orange-500"}`} /> {p.status === "disponivel" ? "DISPONÍVEL" : "VOLTO LOGO"}
                 </div>
-              </GlassContainer>
+              </div>
             ))}
           </div>
-          <button onClick={() => setModo("cliente_servicos")} className="mt-4 text-slate-500 font-black uppercase text-[10px] md:text-xs hover:text-white transition-all shrink-0">VOLTAR PARA SERVIÇOS</button>
+          
+          <button onClick={() => setModo("cliente_servicos")} className="mt-6 mb-2 text-slate-500 font-black uppercase text-[10px] md:text-xs hover:text-white transition-all shrink-0">VOLTAR PARA SERVIÇOS</button>
         </div>
         <FixedFooter />
       </div>
@@ -1211,13 +1220,12 @@ const App = () => {
           <button onClick={() => setModo("selecao")} className="text-slate-500 font-black text-[10px] uppercase flex items-center gap-2 hover:text-white transition-all"><ArrowLeft size={14} /> VOLTAR</button>
         </div>
         
-        {/* Adicionado pt-6 para respirar e não cortar o topo dos postes */}
         <EliteHeader subtitle="PAINEL MASTER" className="pt-6" />
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 flex flex-col items-center pb-24">
           <div className="w-full max-w-6xl space-y-8 mb-20">
             
-            {/* VOZ DA TV E ZERAR FILA (NOVO LAYOUT PROMOVIDO) */}
+            {/* VOZ DA TV E ZERAR FILA NO TOPO */}
             <div className="flex flex-col lg:flex-row justify-between items-center gap-6 w-full bg-slate-900/30 p-6 rounded-[2.5rem] border border-white/5">
                <div className="flex-1 w-full flex flex-col sm:flex-row items-center gap-4">
                   <div className="flex items-center gap-2 shrink-0">
